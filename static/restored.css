@@ -1,0 +1,166 @@
+body, html {
+    height: 100%;
+    margin: 0;
+    font-family: 'Poppins', sans-serif;
+}
+
+.restore-background {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.restore-card {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(20px);
+    border-radius: 25px;
+    padding: 40px;
+    width: 400px;
+    max-width: 90%;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    color: #fff;
+    text-align: center;
+}
+
+h2 {
+    font-weight: 700;
+    margin-bottom: 20px;
+}
+
+.description {
+    font-size: 14px;
+    margin-bottom: 30px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.form-group label {
+    display: block;
+    font-weight: 500;
+    margin-bottom: 5px;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 12px 15px;
+    border-radius: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    background: rgba(255,255,255,0.15);
+    color: #fff;
+    box-shadow: inset 0 2px 5px rgba(0,0,0,0.2);
+    transition: background 0.3s ease, box-shadow 0.3s ease;
+}
+
+.form-group input:focus {
+    background: rgba(255,255,255,0.25);
+    box-shadow: 0 0 8px rgba(255,255,255,0.5);
+    outline: none;
+}
+
+.btn-restore {
+    width: 100%;
+    padding: 14px;
+    border: none;
+    background-color: #ffffff;
+    color: #764ba2;
+    font-size: 18px;
+    border-radius: 25px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-restore:hover {
+    background-color: #f1f1f1;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+}
+
+.or-divider {
+    display: flex;
+    align-items: center;
+    margin: 20px 0;
+    color: #fff;
+    font-weight: 600;
+}
+
+.or-divider .line {
+    flex: 1;
+    height: 1px;
+    background-color: rgba(255,255,255,0.3);
+}
+
+.or-divider span {
+    margin: 0 10px;
+}
+
+.social-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.social-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px;
+    border-radius: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.social-btn i {
+    margin-right: 10px;
+}
+
+.google {
+    background-color: #ffffff;
+    color: #db4437;
+}
+
+.google:hover {
+    background-color: #f5f5f5;
+}
+
+.apple {
+    background-color: #ffffff;
+    color: #333333;
+}
+
+.apple:hover {
+    background-color: #f5f5f5;
+}
+
+.facebook {
+    background-color: #1877f2;
+    color: #ffffff;
+}
+
+.facebook:hover {
+    background-color: #145dbf;
+}
+
+.links {
+    display: flex;
+    justify-content: space-between;
+}
+
+.links a {
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.links a:hover {
+    text-decoration: underline;
+}

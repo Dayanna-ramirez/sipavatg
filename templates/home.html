@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sipavagt - Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='home.css') }}">
+</head>
+<body>
+
+    <!-- Header con menú -->
+    <header>
+        <div class="logo">
+            <img src="{{ url_for('static', filename='img/logo.jpg') }}" alt="Logo">
+        </div>
+        <nav>
+            <ul class="nav-links">
+                <li><a href="#">Inicio</a></li>
+                <li><a href="#">Sobre Nosotros</a></li>
+                <li><a href="#">Productos</a></li>
+                <li><a href="#">Contacto</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Barra de búsqueda -->
+    <div class="buscador">
+        <input type="text" placeholder="Buscar...">
+        <button>Buscar</button>
+
+        <!-- Íconos a la derecha -->
+        <div class="acciones-laterales">
+            <a href="#"><img src="{{ url_for('static', filename='img/carrito.jpg') }}" alt="Carrito"></a>
+            <a href="#"><img src="{{ url_for('static', filename='img/login.jpg') }}" alt="Perfil"></a>
+        </div>
+    </div>
+
+    <!-- Menú de tarjetas -->
+    <div class="menu">
+        <div class="item">
+            <div class="item-text">Prendas</div>
+            <div class="item-icon">
+                <img src="{{ url_for('static', filename='img/prendas.jpg') }}" alt="prendas">
+            </div>
+        </div>
+
+        <div class="item">
+            <div class="item-text">Catálogo</div>
+            <div class="item-icon">
+                <img src="{{ url_for('static', filename='img/catalogo.jpg') }}" alt="catalogo">
+            </div>
+        </div>
+
+        <div class="item">
+            <div class="item-text">Pago online</div>
+            <div class="item-icon">
+                <img src="{{ url_for('static', filename='img/pago.jpg') }}" alt="pago">
+            </div>
+        </div>
+
+        <div class="item">
+            <div class="item-text">Alquiler</div>
+            <div class="item-icon">
+                <img src="{{ url_for('static', filename='img/alquiler.jpg') }}" alt="alquiler">
+            </div>
+        </div>
+
+        <div class="item">
+            <div class="item-text">Inventario</div>
+            <div class="item-icon">
+                <img src="{{ url_for('static', filename='img/inventario.jpg') }}" alt="inventario">
+            </div>
+        </div>
+    </div>
+
+    <!-- Sección de contenido principal -->
+    <div class="contenido">
+        <h1>Bienvenidos</h1>
+    </div>
+
+    <!-- Tabla de datos (CRUD) -->
+    <section class="datos-section">
+        <h2>Datos de Usuarios</h2>
+        <table>
+            <thead>
+                <tr><th>Nombres</th><th>Curso</th><th>Foto</th></tr>
+            </thead>
+            <tbody>
+                  {% for usuario in usuarios %}
+            <tr>
+                <td>{{ usuario['cte_nombre'] }} {{ usuario['cte_apellido'] }}</td>
+                <td>{{ usuario['cte_curso'] }}</td>
+                  <td><img src="{{ url_for('static', filename='img/crud.jpg') }}" alt="Foto" class="tabla-foto"></td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </section>
+
+    <!-- Pie de página -->
+    <footer>
+        <p>&copy; 2025 Sipavagt - Todos los derechos reservados.</p>
+    </footer>
+
+</body>
+</html>
