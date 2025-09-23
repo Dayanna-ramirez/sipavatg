@@ -200,32 +200,29 @@ def catalogo():
 
 @app.route('/agregar_producto', methods=['GET', 'POST'])
 def agregar_producto():
-    if 'rol' not in session or session['rol'] != 'Admin':
-        flash ("Acceso restringido solo para los administradores")
-        return redirect(url_for('login'))
+    #if 'rol' not in session or session['rol'] != 'Admin':
+     #   flash ("Acceso restringido solo para los administradores")
+    #    return redirect(url_for('login'))
     if request.method =='POST':
         nombre =request.form['nombre']
-        descripcion =request.form['descripcion']
         precio =request.form['precio']
         cantidad =request.form['cantidad']
         imagen =request.files['imagen']
         
         
         filename = secure_filename(imagen.filename)
-        imagen.save(os.path.joim('satic/uploads', filename ))
+        imagen.save(os.path.join('static/uploads', filename ))
         
         conn = pymysql.connect(**db_config)
         with conn:
             with conn.cursor() as cur:
-                conn.execute("""
-             INSERT INTO productos (nombre_producto,descripcion,precio,cantidad,imagen)
-             VALUES (%s,%s,%s,%s,%s)
-         """,(nombre,descripcion,precio,cantidad,filename))  
-        conn.commit()
-        conn.close()     
-        
+                cur.execute("""
+             INSERT INTO producto (nombre_producto,precio,cantidad,imagen)
+             VALUES (%s,%s,%s,%s)
+         """,(nombre,precio,cantidad,filename))  
+            conn.commit()        
         flash("Producto agregar correctamente")  
-        return redirect(url_for('inventario'))
+        return redirect(url_for('catalogo'))
     return render_template('agregar_producto.html')
                 
         
