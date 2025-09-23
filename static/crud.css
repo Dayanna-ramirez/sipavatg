@@ -1,0 +1,47 @@
+table
+{
+    background: #22C1C3;
+    background: linear-gradient(0deg, rgba(34, 193, 195, 1) 0%, rgba(253, 187, 45, 1) 100%);
+    align-items: center;
+    width: 350px;
+    height: 400px;
+    text-align: center;
+    border-radius: 2px;
+    border: 2px;
+    border-collapse: separate;
+    border-spacing: 5px;
+    background: #000 url("gradient.gif") bottom left repeat-x;
+    color: #fff;
+}
+.table2
+{
+    align-items: center;
+    width: 400px;
+    height: 400px;
+    text-align: center;
+    border-radius: 5px;
+    border: 2px;
+    background: #004DFF;
+    border-collapse: separate;
+    border-spacing: 5px;
+    background: #000 url("gradient.gif") bottom left repeat-x;
+    color: #fff;
+    background: linear-gradient(90deg, rgba(0, 212, 255, 1) 0%, rgba(9, 9, 121, 1) 35%, rgba(0, 212, 255, 1) 100%);
+}
+.iz
+{
+    width: 300;
+    height: 400;
+    background-color: rgb(156, 147, 160);
+    float: left;
+}
+
+.der
+{
+    width: 300;
+    height: 400;
+    background-color: rgb(5, 41, .41);
+    float: left;
+    margin-left: 10px;
+    text-align: center;
+}

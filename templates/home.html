@@ -43,13 +43,13 @@
                 <img src="{{ url_for('static', filename='img/prendas.jpg') }}" alt="prendas">
             </div>
         </div>
-
+<a href="{{url_for('catalogo')}}"> 
         <div class="item">
             <div class="item-text">Catálogo</div>
-            <div class="item-icon">
-                <img src="{{ url_for('static', filename='img/catalogo.jpg') }}" alt="catalogo">
+            <div class="item-icon" >
+               <img src="{{ url_for('static', filename='img/catalogo.jpg') }}" alt="catalogo">
             </div>
-        </div>
+        </div></a>
 
         <div class="item">
             <div class="item-text">Pago online</div>
@@ -83,15 +83,19 @@
         <h2>Datos de Usuarios</h2>
         <table>
             <thead>
-                <tr><th>Nombres</th><th>Curso</th><th>Foto</th></tr>
+                <th>nombre</th>
+                <th>apellido</th>
+                <th>actualizar</th>
+
             </thead>
+    
             <tbody>
                   {% for usuario in usuarios %}
-            <tr>
-                <td>{{ usuario['cte_nombre'] }} {{ usuario['cte_apellido'] }}</td>
-                <td>{{ usuario['cte_curso'] }}</td>
-                  <td><img src="{{ url_for('static', filename='img/crud.jpg') }}" alt="Foto" class="tabla-foto"></td>
-            </tr>
+                    <tr>
+                        <td>{{usuario['nombre']}}</td>
+                         <td>{{usuario['apellido']}}</td>
+                    </tr>
+
             {% endfor %}
             </tbody>
         </table>
