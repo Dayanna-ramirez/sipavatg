@@ -36,16 +36,24 @@ def home_redirect():
     return redirect(url_for('login'))
 
 # Dashboard principal (pantalla después de login)
-@app.route('/dashboard')
-#@login_required
+@app.route ('/dashboard')
 def dashboard():
+   # if 'usuario' not in session:
+    #    flash("debes iniciar sesion para acceder al dashboard.")
+     #   return redirect(url_for('login'))
+
     conn = pymysql.connect(**db_config)
     with conn:
-        with conn.cursor() as cur:
-            cur.execute("SELECT nombre, apellido FROM usuario")
-            usuarios = cur.fetchall()
-    return render_template('home.html', usuarios=usuarios)
+        with conn.cursor() as cursor:
+            cursor.execute("""
+            SELECT u.id_usuario, u.nombre, u.apellido, u.telefono, u.correo_electronico, ur.nombre_rol
+            FROM usuario u
+            LEFT JOIN rol_usuario ur ON u.id_rol = ur.id_rol
+            """)
+            usuario = cursor.fetchall()
 
+    cursor.close()
+    return render_template('home.html' , usuarios=usuario)
 # Ruta de Registro
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -55,7 +63,6 @@ def register():
         cte_apellido = request.form['cte_apellido']
         cte_telefono = request.form['cte_telefono']
         cte_correo = request.form['correo_electronico']
-        cte_cedula = request.form['cte_cedula']
         password = generate_password_hash(request.form['password'])
 
         # Guardar en base de datos
@@ -63,12 +70,10 @@ def register():
         with conn:
             with conn.cursor() as cur:
                 cur.execute("""
-                    INSERT INTO usuario (
-                        nombre, apellido, telefono, correo_electronico,
-                        cedula, clave
-                    ) VALUES (%s, %s, %s, %s, %s, %s)
-                """, (cte_nombre, cte_apellido, cte_telefono, cte_correo,
-                      cte_cedula, password))
+                            INSERT INTO usuario (
+                        nombre, apellido, telefono, correo_electronico, clave, id_rol
+                    ) VALUES (%s, %s, %s, %s, %s,%s)
+                """, (cte_nombre, cte_apellido, cte_telefono, cte_correo, password,2))
                 conn.commit()
                 user_id = cur.lastrowid  # Obtener el ID insertado
 
@@ -81,6 +86,7 @@ def register():
     return render_template('register.html')
 
 # Ruta de Login
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -90,20 +96,33 @@ def login():
         conn = pymysql.connect(**db_config)
         with conn:
             with conn.cursor() as cur:
-                cur.execute('SELECT * FROM usuario WHERE correo_electronico = %s', (email,))
+                # Consulta corregida con JOIN bien formado
+                cur.execute("""
+                    SELECT u.id_usuario, u.nombre, u.clave, r.nombre_rol
+                    FROM usuario u
+                    JOIN rol_usuario r ON u.id_rol = r.id_rol
+                    WHERE u.correo_electronico = %s
+                """, (email,))
                 user = cur.fetchone()
 
-        if user and check_password_hash(user['clave'], password):
-            session['user_id'] = user['id_usuario']
-            session['correo_electronico'] = user['correo_electronico']
-            session['rol'] = user ['id_rol']
-            
-            
-            flash(f'Bienvenido {user["correo_electronico"]}', 'success')
-            return redirect(url_for('dashboard'))
-        else:
-            flash('Correo o contraseña incorrectos.', 'danger')
-            return redirect(url_for('login'))
+                if user and check_password_hash(user['clave'], password):
+                    # Guardar datos en la sesión
+                    session['user_id'] = user['id_usuario']
+                    session['rol'] = user['nombre_rol']
+                    session['user_name'] = user['nombre']
+                    flash(f'Bienvenido {user["nombre"]}', 'success')
+
+                    # Redirigir según el rol
+                    if user['nombre_rol'] == 'Admin':
+                        return redirect(url_for('dashboard'))
+                    elif user['nombre_rol'] == 'Usuario':
+                        return redirect(url_for('dashboard'))#cambiar a la rutaque debe ver el usuario
+                    else:
+                        flash("Rol no reconocido", "danger")
+                        return redirect(url_for('login'))
+                else:
+                    flash('Correo o contraseña incorrectos.', 'danger')
+                    return redirect(url_for('login'))
 
     return render_template('login.html')
 
@@ -144,7 +163,15 @@ def add_contact():
                     (id_cte, nombre, apellido, correo, cedula)
                 )
                 conn.commit()
+                cur.execute("SELECT id_usuario FROM usuario WHERE username =%", (correo,))
+                nuevo_usuario = cur.fetchone()
 
+                cur.execute("INSERT INTO rol_usuario(id_usuario, idRol) VALUES (%, %)", (nuevo_usuario[0], 2))
+            conn = pymysql.connect(**db_config)
+            with conn:
+                  with conn.cursor() as cur:
+                   cur.execute('DELETE FROM clientes WHERE id_cte = %s', (id,))
+                   conn.commit()
         flash(f"Cliente {nombre} {apellido} agregado.", 'success')
         return redirect(url_for('dashboard'))
 
@@ -158,33 +185,31 @@ def get_contact(id):
             dato = cur.fetchone()
     return render_template('Editacli.html', clients=dato)
 
-@app.route('/actualiza/<string:id>', methods=['POST'])
-@login_required
-def set_contact(id):
-    if request.method == 'POST':
-        nombre = request.form['cte_nombre']
-        apellido = request.form['cte_apellido']
-        correo = request.form['cte_correo']
-        cedula = request.form['cte_cedula']
+#editar usuario
+@app.route('/actualizar/<int:id>', methods=['POST'])
+def actualizar(id):
+    nombre =request.form['nombre']
+    apellido =request.form['apellido']
+    correo =request.form['correo_electronico']
+    rol = request.form['rol_usuario']
 
-        conn = pymysql.connect(**db_config)
-        with conn:
-            with conn.cursor() as cur:
-                cur.execute("""
-                    UPDATE clientes
-                    SET cte_nombre = %s,
-                        cte_apellido = %s,
-                        cte_correo = %s,
-                        cte_cedula = %s
-                    WHERE id_cte = %s
-                """, (nombre, apellido, correo, cedula, id))
-                conn.commit()
+    conn = pymysql.connect(**db_config)
+    with conn:
+        with conn.cursor() as cursor:
+            cursor.execute("""UPDATE usuario SET nombre=%s,apellido=%s, correo_electronico=%s, id_rol=%s WHERE id_usuario=%s""",(nombre,apellido,correo,rol,id))
+            cursor.execute("SELECT id_rol FROM rol_usuario WHERE nombre_rol=%s",(rol,))
+            existe= cursor.fetchone()
 
-        flash('Cliente actualizado correctamente.', 'success')
-        return redirect(url_for('dashboard'))
+           
+
+            conn.commit()
+    cursor.close()
+
+    return redirect(url_for('dashboard'))
     
-@app.route('/catalogo')
-def catalogo():
+        
+@app.route('/inventario')
+def inventario():
     #if 'rol' not in session or session['rol'] != 'Admin':
      #   flash ("Acceso restringido solo para los administradores")
       #  return redirect(url_for('login'))
@@ -193,11 +218,12 @@ def catalogo():
     conn = pymysql.connect(**db_config)
     with conn:
         with conn.cursor() as cursor:
-            cursor.execute("SELECT * FROM catalogo")
+            cursor.execute("SELECT * FROM producto")
             productos = cursor.fetchall()
 
-    return render_template('catalogo.html', productos=productos)
+    return render_template('inventario.html', productos=productos)
 
+# Ruta para agregar productos (solo Admin)
 @app.route('/agregar_producto', methods=['GET', 'POST'])
 def agregar_producto():
     #if 'rol' not in session or session['rol'] != 'Admin':
@@ -227,15 +253,42 @@ def agregar_producto():
                 
         
 
-@app.route("/delete/<string:id>")
-@login_required
-def delete_contact(id):
+@app.route('/eliminar/<int:id>')
+def eliminar(id):
     conn = pymysql.connect(**db_config)
     with conn:
-        with conn.cursor() as cur:
-            cur.execute('DELETE FROM clientes WHERE id_cte = %s', (id,))
-            conn.commit()
+        with conn.cursor() as cursor:
+            cursor.execute('DELETE FROM usuario WHERE id_usuario=%s',(id,))
+        conn.commit()
+        cursor.close()
+        flash ('Usuario eliminado')
     return redirect(url_for('dashboard'))
+
+@app.route('/agregar_usuario', methods=['POST'])
+def agregar_usuario():
+    nombre = request.form['nombre']
+    apellido = request.form['apellido']
+    telefono = request.form['telefono']
+    correo = request.form['correo_electronico']
+    rol = request.form['rol_usuario']
+
+    try:
+        conn = pymysql.connect(**db_config)
+        with conn.cursor() as cur:
+            cur.execute("""
+                INSERT INTO usuario (nombre, apellido, telefono, correo_electronico, id_rol)
+                VALUES (%s, %s, %s, %s, %s)
+            """, (nombre, apellido, telefono, correo, rol))
+        conn.commit()
+        flash('Usuario agregado correctamente', 'success')
+    except Exception as e:
+        print(f"Error al agregar usuario: {e}")
+        flash('Ocurrió un error al agregar el usuario', 'danger')
+
+    return redirect(url_for('dashboard'))
+
+
+
 
 if __name__ == "__main__":
     app.run(port=5000, debug=True)

@@ -203,3 +203,14 @@ footer {
     margin-top: 50px;
     font-size: 14px;
 }
+
+.btn-personalizado {
+    background-color: #8616f6;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 30px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s;
+}

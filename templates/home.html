@@ -1,110 +1,192 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sipavagt - Dashboard</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='home.css') }}">
-</head>
-<body>
+{% extends 'base.html' %}
 
-    <!-- Header con menú -->
-    <header>
-        <div class="logo">
-            <img src="{{ url_for('static', filename='img/logo.jpg') }}" alt="Logo">
-        </div>
-        <nav>
-            <ul class="nav-links">
-                <li><a href="#">Inicio</a></li>
-                <li><a href="#">Sobre Nosotros</a></li>
-                <li><a href="#">Productos</a></li>
-                <li><a href="#">Contacto</a></li>
-            </ul>
-        </nav>
-    </header>
+{% block title %}dashboard{% endblock %}
 
-    <!-- Barra de búsqueda -->
-    <div class="buscador">
-        <input type="text" placeholder="Buscar...">
-        <button>Buscar</button>
+{% block content %}
+<div class="container mb-4">
+    <h3>Gestión de usuarios</h3>
 
-        <!-- Íconos a la derecha -->
-        <div class="acciones-laterales">
-            <a href="#"><img src="{{ url_for('static', filename='img/carrito.jpg') }}" alt="Carrito"></a>
-            <a href="#"><img src="{{ url_for('static', filename='img/login.jpg') }}" alt="Perfil"></a>
-        </div>
+<button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalAgregar">Agregar usuario</button>
+<!-- The Modal Agregar usuario-->
+<!-- Modal Agregar Usuario -->
+<div class="modal fade" id="modalAgregar" tabindex="-1">
+    <div class="modal-dialog">
+        <form method="POST" action="{{ url_for('agregar_usuario') }}">
+            <div class="modal-content">
+
+                <!-- Modal Header -->
+                <div class="modal-header">
+                    <h4 class="modal-title">Agregar usuario</h4>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <!-- Modal Body -->
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="nombre" class="form-label">Nombre</label>
+                            <input type="text" class="form-control" name="nombre" id="nombre" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="apellido" class="form-label">Apellido</label>
+                            <input type="text" class="form-control" name="apellido" id="apellido" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="telefono" class="form-label">Teléfono</label>
+                            <input type="text" class="form-control" name="telefono" id="telefono" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="correo_electronico" class="form-label">Correo electrónico</label>
+                            <input type="email" class="form-control" name="correo_electronico" id="correo_electronico" required>
+                        </div>
+                        <div class="col-md-12">
+                            <label for="rol_usuario" class="form-label">Rol del usuario</label>
+                            <select name="rol_usuario" class="form-control" id="rol_usuario" required>
+                                <option value="" disabled selected>Seleccione un rol</option>
+                                <option value="1">Admin</option>
+                                <option value="2">Usuario</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modal Footer -->
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-success">Guardar</button>
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                </div>
+
+            </div>
+        </form>
     </div>
+</div>
 
-    <!-- Menú de tarjetas -->
-    <div class="menu">
-        <div class="item">
-            <div class="item-text">Prendas</div>
-            <div class="item-icon">
-                <img src="{{ url_for('static', filename='img/prendas.jpg') }}" alt="prendas">
-            </div>
-        </div>
-<a href="{{url_for('catalogo')}}"> 
-        <div class="item">
-            <div class="item-text">Catálogo</div>
-            <div class="item-icon" >
-               <img src="{{ url_for('static', filename='img/catalogo.jpg') }}" alt="catalogo">
-            </div>
-        </div></a>
+<br><br>
 
-        <div class="item">
-            <div class="item-text">Pago online</div>
-            <div class="item-icon">
-                <img src="{{ url_for('static', filename='img/pago.jpg') }}" alt="pago">
-            </div>
-        </div>
+    <table class="table table-striped table-hover">
+        <thead class="table-light">
+            <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Apellido</th>
+                <th>Teléfono</th>
+                <th>Correo</th>
+                <th>Rol</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for u in usuarios %}
+            <tr>
+                <td>{{ u['id_usuario'] }}</td>
+                <td>{{ u['nombre'] }}</td>
+                <td>{{ u['apellido'] }}</td>
+                <td>{{ u['telefono'] }}</td>
+                <td>{{ u['correo_electronico'] }}</td>
+                <td>{{ u['nombre_rol'] }}</td>
+                <td>
+                    <button class="btn btn-warning btn-sm" data-bs-toggle="modal"
+                        data-bs-target="#ModalEdit{{ u['id_usuario'] }}">Editar</button>
 
-        <div class="item">
-            <div class="item-text">Alquiler</div>
-            <div class="item-icon">
-                <img src="{{ url_for('static', filename='img/alquiler.jpg') }}" alt="alquiler">
-            </div>
-        </div>
+                    <!-- Modal Edit -->
+                    <div class="modal fade" id="ModalEdit{{ u['id_usuario'] }}" tabindex="-1"
+                        aria-labelledby="EditModalLabel{{ u['id_usuario'] }}" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <form action="{{url_for('actualizar', id=u['id_usuario'])}}" method="POST">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h4 class="modal-title" id="EditModalLabel{{ u['id_usuario'] }}">Editar Usuario:
+                                            {{ u['nombre'] }}
+                                            {{ u['apellido'] }}</h4>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="form-group">
+                                            <label for="nombre {{ u['id_usuario']}}">Nombre</label>
+                                            <input type="text" class="form-control" name="nombre"
+                                                id="nombre{{ u['id_usuario']}}" value="{{ u['nombre']}}" required>
+                                        </div>
 
-        <div class="item">
-            <div class="item-text">Inventario</div>
-            <div class="item-icon">
-                <img src="{{ url_for('static', filename='img/inventario.jpg') }}" alt="inventario">
-            </div>
-        </div>
-    </div>
+                                        <div class="form-group">
+                                            <label for="apellido {{ u['id_usuario']}}">Apellido</label>
+                                            <input type="text" class="form-control" name="apellido"
+                                                id="apellido{{ u['id_usuario']}}" value="{{ u['apellido']}}" required>
+                                        </div>
 
-    <!-- Sección de contenido principal -->
-    <div class="contenido">
-        <h1>Bienvenidos</h1>
-    </div>
+                                        <div class="form-group">
+                                            <label for="telefono {{ u['id_usuario']}}">Telefono</label>
+                                            <input type="text" class="form-control" name="telefono"
+                                                id="telefono{{ u['id_usuario']}}" value="{{ u['telefono']}}" required>
+                                        </div>
 
-    <!-- Tabla de datos (CRUD) -->
-    <section class="datos-section">
-        <h2>Datos de Usuarios</h2>
-        <table>
-            <thead>
-                <th>nombre</th>
-                <th>apellido</th>
-                <th>actualizar</th>
+                                        <div class="form-group">
+                                            <label for="correo_electronico {{ u['id_usuario']}}">Correo
+                                                electronico</label>
+                                            <input type="email" class="form-control" name="correo_electronico"
+                                                id="correo_electronico{{ u['id_usuario']}}"
+                                                value="{{ u['correo_electronico']}}" required>
+                                        </div>
 
-            </thead>
-    
-            <tbody>
-                  {% for usuario in usuarios %}
-                    <tr>
-                        <td>{{usuario['nombre']}}</td>
-                         <td>{{usuario['apellido']}}</td>
-                    </tr>
+                                        <div class="form-group">
+                                            <label for="rol_usuario{{ u['id_usuario'] }}">Rol del usuario</label>
+                                            <select name="rol_usuario" class="form-control"
+                                                id="rol_usuario{{ u['id_usuario'] }}">
+                                                <option value="1" {% if u['id_rol']==1 %}selected{% endif %}>Admin
+                                                </option>
+                                                <option value="2" {% if u['id_rol']==2 %}selected{% endif %}>Usuario
+                                                </option>
+                                            </select>
+                                        </div>
 
+                                    </div>
+                                    <!-- Modal footer -->
+                                    <div class="modal-footer">
+                                        <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                                        <button type="button" class="btn btn-danger"
+                                            data-bs-dismiss="modal">Cerrar</button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-danger btn-sm" data-bs-toggle="modal"
+                        data-bs-target="#ModalEliminar{{u['id_usuario']}}">Eliminar</button>
+
+                    <!-- The Modal -->
+                    <div class="modal" id="ModalEliminar{{u['id_usuario']}}" tabindex="-1" role="dialog"
+                        aria-labelledby="modalLabel{{u['id_usuario']}}" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+
+                                <!-- Modal Header -->
+                                <div class="modal-header">
+                                    <h4 class="modal-title" id="modallabel{{u['id_usuario']}}">Confirmar eliminacion
+                                    </h4>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+
+                                <!-- Modal body -->
+                                <div class="modal-body">
+                                    ¿Esta seguro de que deseas eliminar al usuario <strong> {{u['nombre']}}
+                                        {{u['apellido']}}</strong>?
+                                </div>
+
+                                <!-- Modal footer -->
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secundary"
+                                        data-bs-dismiss="modal">Cancelar</button>
+                                    <a href="{{url_for('eliminar', id= u['id_usuario'])}}"
+                                        class="btn btn-danger">Eliminar</a>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </td>
+            </tr>
             {% endfor %}
-            </tbody>
-        </table>
-    </section>
-
-    <!-- Pie de página -->
-    <footer>
-        <p>&copy; 2025 Sipavagt - Todos los derechos reservados.</p>
-    </footer>
-
-</body>
-</html>
+        </tbody>
+    </table>
+</div>
+{% endblock %}

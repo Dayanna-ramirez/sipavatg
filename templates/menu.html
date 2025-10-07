@@ -1,67 +1,68 @@
-
-    <link rel="stylesheet" href="{{ url_for('static', filename='home.css') }}">
-    <!-- Header con menú -->
-    <header>
-        <div class="logo">
-            <img src="{{ url_for('static', filename='img/logo.jpg') }}" alt="Logo">
-        </div>
-        <nav>
-            <ul class="nav-links">
-                <li><a href="#">Inicio</a></li>
-                <li><a href="#">Sobre Nosotros</a></li>
-                <li><a href="#">Productos</a></li>
-                <li><a href="#">Contacto</a></li>
-            </ul>
-        </nav>
-    </header>
-        
-    <!-- Barra de búsqueda -->
-    <div class="buscador">
-        <input type="text" placeholder="Buscar...">
-        <button>Buscar</button>
-
-        <!-- Íconos a la derecha -->
-        <div class="acciones-laterales">
-            <a href="#"><img src="{{ url_for('static', filename='img/carrito.jpg') }}" alt="Carrito"></a>
-            <a href="#"><img src="{{ url_for('static', filename='img/login.jpg') }}" alt="Perfil"></a>
-        </div>
+<link rel="stylesheet" href="{{ url_for('static', filename='home.css') }}">
+<!-- Header con menú -->
+<header>
+    <div class="logo">
+        <img src="{{ url_for('static', filename='img/logo.jpg') }}" alt="Logo">
     </div>
+    <nav>
+        <ul class="nav-links">
+            <li><a href="#">Inicio</a></li>
+            <li><a href="#">Sobre Nosotros</a></li>
+            <li><a href="#">Productos</a></li>
+            <li><a href="#">Contacto</a></li>
+        </ul>
+    </nav>
+</header>
 
-    <!-- Menú de tarjetas -->
-    <div class="menu">
+<!-- Barra de búsqueda -->
+<div class="buscador">
+    <input type="text" placeholder="Buscar...">
+    <button>Buscar</button>
+
+    <!-- Íconos a la derecha -->
+    <div class="acciones-laterales">
+        <a href="#"><img src="{{ url_for('static', filename='img/carrito.jpg') }}" alt="Carrito"></a>
+        <a href="#"><img src="{{ url_for('static', filename='img/login.jpg') }}" alt="Perfil"></a>
+    </div>
+</div>
+
+<!-- Menú de tarjetas -->
+<div class="menu">
+    <a href="{{url_for('dashboard')}}">
         <div class="item">
-            <div class="item-text">Prendas</div>
+            <div class="item-text">Dashboard</div>
             <div class="item-icon">
                 <img src="{{ url_for('static', filename='img/prendas.jpg') }}" alt="prendas">
             </div>
         </div>
-<a href="{{url_for('catalogo')}}"> 
-        <div class="item">
-            <div class="item-text">Catálogo</div>
-            <div class="item-icon" >
-               <img src="{{ url_for('static', filename='img/catalogo.jpg') }}" alt="catalogo">
-            </div>
-        </div></a>
-
-        <div class="item">
-            <div class="item-text">Pago online</div>
-            <div class="item-icon">
-                <img src="{{ url_for('static', filename='img/pago.jpg') }}" alt="pago">
-            </div>
-        </div>
-
-        <div class="item">
-            <div class="item-text">Alquiler</div>
-            <div class="item-icon">
-                <img src="{{ url_for('static', filename='img/alquiler.jpg') }}" alt="alquiler">
-            </div>
-        </div>
-
+    </a>
+    <a href="{{url_for('inventario')}}">
         <div class="item">
             <div class="item-text">Inventario</div>
             <div class="item-icon">
                 <img src="{{ url_for('static', filename='img/inventario.jpg') }}" alt="inventario">
             </div>
         </div>
+    </a>
+
+    <div class="item">
+        <div class="item-text">Pago online</div>
+        <div class="item-icon">
+            <img src="{{ url_for('static', filename='img/pago.jpg') }}" alt="pago">
+        </div>
     </div>
-    
+
+    <div class="item">
+        <div class="item-text">Alquiler</div>
+        <div class="item-icon">
+            <img src="{{ url_for('static', filename='img/alquiler.jpg') }}" alt="alquiler">
+        </div>
+    </div>
+
+    <div class="item">
+        <div class="item-text">Catalogo</div>
+        <div class="item-icon">
+            <img src="{{ url_for('static', filename='img/Catalogo.jpg') }}" alt="inventario">
+        </div>
+    </div>
+</div>

@@ -1,0 +1,89 @@
+{% extends 'base.html'%}
+
+{% block title %}Inventario {% endblock %}
+
+{% block content %}
+<div class="container mb-4">
+  <h3>Gestion de Inventario</h3>
+
+  <button class="btn btn-personalizado" data-bs-toggle="modal" data-bs-target="#modalAgregar">Agregar productos</button>
+  <br><br>
+
+  <table class="table table-bordered table-hover">
+    <thead class="table-light">
+      <tr>
+        <th>Imagen</th>
+        <th>Nombres</th>
+        <th>Precios</th>
+        <td>Cantidad</td>
+        <th>Descripcion</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for p in productos %}
+      <tr>
+        <td><img src="{{url_for('static', filename='uploads/' + p.imagen)}} " width="80"></td>
+        <td>{{ p.nombre_producto }}</td>
+        <td>{{ p.precio}}</td>
+        <td>{{ p.cantidad }}</td>
+        <td>{{ p.imagen }}</td>
+        <td>  </td>
+      </tr>
+      {% endfor%}
+
+
+    </tbody>
+
+  </table>
+  <!-- The Modal -->
+  <div class="modal" id="modalAgregar" tabindex="-1">
+    <div class="modal-dialog">
+      <form method="POST" action="{{url_for ('agregar_producto')}}" enctype="multipart/form-data">
+
+
+        <div class="modal-content">
+
+          <!-- Modal Header -->
+          <div class="modal-header">
+            <h4 class="modal-title">Agregar productos</h4>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+
+          <!-- Modal body -->
+          <div class="modal-body">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label for="nombre" class="form-label">Nombre</label>
+                <input type="text" class="for-control" name="nombre" id="nombre" required>
+              </div>
+              <div class="col-md-6">
+                <label for="precio" class="form-label">Precio</label>
+                <input type="number" class="for-control" name="precio" id="precio" required>
+              </div>
+
+              <div class="col-md-6">
+                <label for="cantidad" class="form-label">Cantidad</label>
+                <input type="number" class="for-control" name="cantidad" id="cantidad" required>
+              </div>
+              <div class="col-md-6">
+                <label for="imagen" class="form-label">Imagen</label>
+                <input type="file" class="for-control" name="imagen" id="cantidad" required>
+              </div>
+            </div>
+          </div>
+
+          <!-- Modal footer -->
+          <div class="modal-footer">
+            <button type="submit" class="btn btn-success">Guardar</button>
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+          </div>
+
+        </div>
+      </form>
+    </div>
+  </div>
+
+</div>
+
+{% endblock %}
