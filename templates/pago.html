@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+
+{% block title %}Resumen de compra{% endblock %}
+
+{% block content %}
+<div class="carrito-view">
+    <h2 style="text-align: center; margin-top: 20px;">Resumen de compra</h2>
+
+    {% if productos %}
+    <div style="max-width: 1100px; margin: 0 auto; padding: 0 20px;">
+        <table class="tabla_carrito">
+            <thead>
+                <tr>
+                    <th>Producto</th>
+                    <th>Cantidad</th>
+                    <th>Precio</th>
+                    <th>Subtotal</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in productos %}
+                <tr>
+                    <td>{{ p.nombre_producto }}</td>
+                    <td>{{ p.cantidad }}</td>
+                    <td>${{ "{:,.0f}".format(p.precio) }}</td>
+                    <td>${{ "{:,.0f}".format(p.precio * p.cantidad) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="total-box" style="text-align: right; margin-top: 15px; padding: 0 20px;">
+        <strong>Total: ${{ "{:,.0f}".format(total) }}</strong>
+    </div>
+
+    <div style="margin-top: 15px; text-align: right; padding: 0 20px;">
+        <form method="POST" class="mt-4" style="text-align: right;">
+            <div class="form-check" style="display: flex; justify-content: flex-end; align-items: center;" required>
+                <input class="form-check-input" type="radio" name="metodo_pago" value="Nequi">
+                <label class="form-check-label" style="margin-left: 8px;">Nequi</label>
+            </div>
+            <div class="form-check" style="display: flex; justify-content: flex-end; align-items: center;">
+                <input class="form-check-input" type="radio" name="metodo_pago" value="Daviplata">
+                <label class="form-check-label" style="margin-left: 8px;">Daviplata</label>
+            </div>
+            <div class="form-check" style="display: flex; justify-content: flex-end; align-items: center;">
+                <input class="form-check-input" type="radio" name="metodo_pago" value="Tarjeta">
+                <label class="form-check-label" style="margin-left: 8px;">Tarjeta</label>
+            </div>
+            <button type="submit" class="btn btn-primary">Pagar</button>
+        </form>
+    </div>
+    {% else %}
+    <p style="text-align: center; font-size: 1.2em; margin-top: 20px;">No hay productos en el resumen</p>
+    {% endif %}
+</div>
+{% endblock %}

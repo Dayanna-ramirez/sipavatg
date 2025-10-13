@@ -4,7 +4,7 @@
 
 {% block content %}
 <div class="container mb-4">
-  <h3>Gestion de Inventario</h3>
+  <h3>Gestión de Inventario</h3>
 
   <button class="btn btn-personalizado" data-bs-toggle="modal" data-bs-target="#modalAgregar">Agregar productos</button>
   <br><br>
@@ -13,77 +13,116 @@
     <thead class="table-light">
       <tr>
         <th>Imagen</th>
-        <th>Nombres</th>
-        <th>Precios</th>
-        <td>Cantidad</td>
-        <th>Descripcion</th>
+        <th>Nombre</th>
+        <th>Precio</th>
+        <th>Cantidad</th>
+        <th>Archivo Imagen</th>
         <th>Acciones</th>
       </tr>
     </thead>
     <tbody>
       {% for p in productos %}
       <tr>
-        <td><img src="{{url_for('static', filename='uploads/' + p.imagen)}} " width="80"></td>
+        <td><img src="{{ url_for('static', filename='uploads/' + p.imagen) }}" width="80"></td>
         <td>{{ p.nombre_producto }}</td>
-        <td>{{ p.precio}}</td>
+        <td>{{ p.precio }}</td>
         <td>{{ p.cantidad }}</td>
         <td>{{ p.imagen }}</td>
-        <td>  </td>
+        <td>
+          <button class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#modalEditar{{ p.id_producto }}">Editar</button>
+          <button class="btn btn-outline-danger" onclick="if(confirm('¿Estás seguro de eliminar este producto?')){ window.location.href='{{ url_for('eliminar_producto', id=p.id_producto) }}' }">Eliminar</button>
+        </td>
       </tr>
-      {% endfor%}
 
+      <!-- Modal de edición -->
+      <div class="modal fade" id="modalEditar{{ p.id_producto }}" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+          <form method="POST" action="{{ url_for('editar_producto', id=p.id_producto) }}" enctype="multipart/form-data">
+            <div class="modal-content">
 
+              <div class="modal-header">
+                <h5 class="modal-title">Editar producto</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+              </div>
+
+              <div class="modal-body">
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <label for="nombre{{ p.id_producto }}" class="form-label">Nombre</label>
+                    <input type="text" class="form-control" name="nombre" id="nombre{{ p.id_producto }}" value="{{ p.nombre_producto }}" required>
+                  </div>
+
+                  <div class="col-md-6">
+                    <label for="precio{{ p.id_producto }}" class="form-label">Precio</label>
+                    <input type="number" class="form-control" name="precio" id="precio{{ p.id_producto }}" value="{{ p.precio }}" required>
+                  </div>
+
+                  <div class="col-md-6">
+                    <label for="cantidad{{ p.id_producto }}" class="form-label">Cantidad</label>
+                    <input type="number" class="form-control" name="cantidad" id="cantidad{{ p.id_producto }}" value="{{ p.cantidad }}" required>
+                  </div>
+
+                  <div class="col-md-6">
+                    <label for="imagen{{ p.id_producto }}" class="form-label">Imagen</label>
+                    <input type="file" class="form-control" name="imagen" id="imagen{{ p.id_producto }}">
+                    <small class="text-muted">Archivo actual: {{ p.imagen }}</small>
+                  </div>
+                </div>
+              </div>
+
+              <div class="modal-footer">
+                <button type="submit" class="btn btn-primary">Guardar cambios</button>
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+              </div>
+
+            </div>
+          </form>
+        </div>
+      </div>
+      {% endfor %}
     </tbody>
-
   </table>
-  <!-- The Modal -->
-  <div class="modal" id="modalAgregar" tabindex="-1">
+
+  <!-- Modal agregar producto -->
+  <div class="modal fade" id="modalAgregar" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
-      <form method="POST" action="{{url_for ('agregar_producto')}}" enctype="multipart/form-data">
-
-
+      <form method="POST" action="{{ url_for('agregar_producto') }}" enctype="multipart/form-data">
         <div class="modal-content">
-
-          <!-- Modal Header -->
           <div class="modal-header">
-            <h4 class="modal-title">Agregar productos</h4>
+            <h4 class="modal-title">Agregar producto</h4>
             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
           </div>
 
-          <!-- Modal body -->
           <div class="modal-body">
             <div class="row g-3">
               <div class="col-md-6">
                 <label for="nombre" class="form-label">Nombre</label>
-                <input type="text" class="for-control" name="nombre" id="nombre" required>
+                <input type="text" class="form-control" name="nombre" id="nombre" required>
               </div>
               <div class="col-md-6">
                 <label for="precio" class="form-label">Precio</label>
-                <input type="number" class="for-control" name="precio" id="precio" required>
+                <input type="number" class="form-control" name="precio" id="precio" required>
               </div>
 
               <div class="col-md-6">
                 <label for="cantidad" class="form-label">Cantidad</label>
-                <input type="number" class="for-control" name="cantidad" id="cantidad" required>
+                <input type="number" class="form-control" name="cantidad" id="cantidad" required>
               </div>
               <div class="col-md-6">
                 <label for="imagen" class="form-label">Imagen</label>
-                <input type="file" class="for-control" name="imagen" id="cantidad" required>
+                <input type="file" class="form-control" name="imagen" id="imagen" required>
               </div>
             </div>
           </div>
 
-          <!-- Modal footer -->
           <div class="modal-footer">
             <button type="submit" class="btn btn-success">Guardar</button>
             <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
           </div>
-
         </div>
       </form>
     </div>
   </div>
 
 </div>
-
 {% endblock %}

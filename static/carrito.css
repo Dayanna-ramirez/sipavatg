@@ -1,0 +1,147 @@
+.carrito-view {
+    background: #f8f9fa;
+    padding: 30px;
+    border-radius: 12px;
+    max-width: 1100px;
+    margin: 50px auto;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    font-family: 'Segoe UI', sans-serif;
+}
+
+.carrito-view h1 {
+    text-align: center;
+    color: #2c3e50;
+    font-size: 2em;
+    margin-bottom: 25px;
+}
+
+.tabla_carrito {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.tabla_carrito th {
+    background-color: #3498db;
+    color: #fff;
+    text-transform: uppercase;
+    font-weight: 600;
+    padding: 12px;
+    text-align: center;
+}
+
+.tabla_carrito td {
+    padding: 14px;
+    text-align: center;
+    vertical-align: middle;
+    border-bottom: 1px solid #eee;
+}
+
+.tabla_carrito tr:hover {
+    background-color: #f8f8f8;
+}
+
+.tabla_carrito img {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+/* Botones de cantidad */
+.btn-cantidad {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-cantidad button {
+    border: none;
+    border-radius: 6px;
+    width: 28px;
+    height: 28px;
+    color: #fff;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.2s ease;
+}
+
+.btn-cantidad .menos {
+    background: #e67e22;
+}
+.btn-cantidad .menos:hover {
+    background: #f39c12;
+}
+
+.btn-cantidad .mas {
+    background: #2ecc71;
+}
+.btn-cantidad .mas:hover {
+    background: #27ae60;
+}
+
+/* Botón eliminar */
+.btn-eliminar {
+    background: #e74c3c;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+.btn-eliminar:hover {
+    background: #c0392b;
+}
+
+/* Caja total */
+.total-box {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 25px;
+    padding: 15px 20px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    font-size: 1.2em;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+/* Botones inferiores */
+.btn-acciones {
+    display: flex;
+    gap: 15px;
+}
+
+.btn-acciones button {
+    border: none;
+    border-radius: 8px;
+    padding: 10px 18px;
+    font-size: 1em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.btn-vaciar {
+    background: #f1c40f;
+    color: white;
+}
+.btn-vaciar:hover {
+    background: #d4ac0d;
+}
+
+.btn-pagar {
+    background: #27ae60;
+    color: white;
+}
+.btn-pagar:hover {
+    background: #1e8449;
+}

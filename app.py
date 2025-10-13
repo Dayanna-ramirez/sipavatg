@@ -3,13 +3,14 @@ import pymysql
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from werkzeug.utils import secure_filename 
+import random
 import os
 from functools import wraps  # Para el decorador login_required
 
 app = Flask(__name__)
 app.secret_key = 'clave_super_secreta'
 
-# Configuración de la base de datos
+# Configuración de la base de datos 
 db_config = {
     'host': 'localhost',
     'user': 'root',
@@ -33,18 +34,21 @@ def login_required(f):
 @app.context_processor
 def contar_items_carrito():
     if 'idUsuario' in session:
-        idUsuario = session ['idUsuario']
-        conn = pymysql.connect.cursor()
-        conn.execute("""
-                    SELECT SUM(dc.cantidad)
-                    FROM detalle_carrito dc
-                    JOIN carrito c ON dc.idCarrito = c.idCarrito
-                    WHERE c.idUsuario = %s
-                    """, (idUsuario,))
-        cantidad = conn.fetchall()[0]
+        idUsuario = session['idUsuario']
+        conn = pymysql.connect(**db_config)
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT COALESCE(SUM(dc.cantidad), 0) AS total
+                FROM detalle_carrito dc
+                JOIN carrito c ON dc.idCarrito = c.idCarrito
+                WHERE c.idUsuario = %s
+            """, (idUsuario,))
+            resultado = cur.fetchone()
+            cantidad = resultado['total'] if resultado else 0
         conn.close()
-        return dict(carrito_cantidad=cantidad if cantidad else 0)
+        return dict(carrito_cantidad=cantidad)
     return dict(carrito_cantidad=0)
+
 
 # Ruta inicial redirige al login
 @app.route('/')
@@ -109,39 +113,32 @@ def login():
         email = request.form['email']
         password = request.form['password']
 
-        conn = pymysql.connect(**db_config)
-        with conn:
-            with conn.cursor() as cur:
-                # Consulta corregida con JOIN bien formado
-                cur.execute("""
-                    SELECT u.id_usuario, u.nombre, u.clave, r.nombre_rol
-                    FROM usuario u
-                    JOIN rol_usuario r ON u.id_rol = r.id_rol
-                    WHERE u.correo_electronico = %s
-                """, (email,))
-                user = cur.fetchone()
+        conexion = pymysql.connect(**db_config)
+        cursor = conexion.cursor()
+        cursor.execute("""
+            SELECT u.id_usuario, u.nombre, u.clave, r.nombre_rol
+            FROM usuario u
+            JOIN rol_usuario r ON u.id_rol = r.id_rol
+            WHERE u.correo_electronico = %s
+        """, (email,))
+        user = cursor.fetchone()
+        cursor.close()
+        conexion.close()
 
-                if user and check_password_hash(user['clave'], password):
-                    # Guardar datos en la sesión
-                    session['idUsario']= user[0]
-                    session['user_id'] = user['id_usuario']
-                    session['rol'] = user['nombre_rol']
-                    session['user_name'] = user['nombre']
-                    flash(f'Bienvenido {user["nombre"]}', 'success')
+        if user and check_password_hash(user['clave'], password):
+            # Guardar los datos en la sesión (nombres consistentes)
+            session['idUsuario'] = user['id_usuario']
+            session['rol'] = user['nombre_rol']
+            session['user_name'] = user['nombre']
 
-                    # Redirigir según el rol
-                    if user['nombre_rol'] == 'Admin':
-                        return redirect(url_for('dashboard'))
-                    elif user['nombre_rol'] == 'Usuario':
-                        return redirect(url_for('dashboard'))#cambiar a la rutaque debe ver el usuario
-                    else:
-                        flash("Rol no reconocido", "danger")
-                        return redirect(url_for('login'))
-                else:
-                    flash('Correo o contraseña incorrectos.', 'danger')
-                    return redirect(url_for('login'))
+            flash('Inicio de sesión exitoso', 'success')
+            return redirect(url_for('dashboard'))
+        else:
+            flash('Correo o contraseña incorrectos', 'danger')
+            return redirect(url_for('login'))
 
     return render_template('login.html')
+
 
 # Ruta de Logout
 @app.route('/logout')
@@ -217,11 +214,8 @@ def actualizar(id):
             cursor.execute("SELECT id_rol FROM rol_usuario WHERE nombre_rol=%s",(rol,))
             existe= cursor.fetchone()
 
-           
-
             conn.commit()
     cursor.close()
-
     return redirect(url_for('dashboard'))
     
         
@@ -267,7 +261,67 @@ def agregar_producto():
         flash("Producto agregar correctamente")  
         return redirect(url_for('catalogo'))
     return render_template('agregar_producto.html')
+
+@app.route('/editar_producto/<int:id>', methods=['GET', 'POST'])
+def editar_producto(id):
+    conn = pymysql.connect(**db_config)
+    try:
+        with conn.cursor(pymysql.cursors.DictCursor) as cur:
+            # Obtener producto existente
+            cur.execute("SELECT * FROM producto WHERE id_producto=%s", (id,))
+            producto = cur.fetchone()
+
+        if request.method == 'POST':
+            nombre = request.form['nombre']
+            precio = request.form['precio']
+            cantidad = request.form['cantidad']
+            imagen = request.files.get('imagen')
+
+            # Si se sube nueva imagen
+            if imagen and imagen.filename != '':
+                filename = secure_filename(imagen.filename)
+                imagen.save(os.path.join('static/uploads', filename))
+            else:
+                filename = producto['imagen']  # conserva la imagen actual
+
+            # Actualizar producto
+            with conn.cursor() as cur:
+                cur.execute("""
+                    UPDATE producto
+                    SET nombre_producto=%s, precio=%s, cantidad=%s, imagen=%s
+                    WHERE id_producto=%s
+                """, (nombre, precio, cantidad, filename, id))
+                conn.commit()
+
+            flash("Producto actualizado correctamente")
+            return redirect(url_for('inventario'))
+
+        return render_template('editar_producto.html', producto=producto)
+
+    except Exception as e:
+        conn.rollback()
+        flash(f"Error al editar el producto: {str(e)}")
+        return redirect(url_for('inventario'))
+    finally:
+        conn.close()
+    return render_template('editar_producto.html', producto=producto)
+
+@app.route('/eliminar_producto/<int:id>')
+def eliminar_producto(id):
+    conn = pymysql.connect(**db_config)
+    try:
+        with conn.cursor() as cur:
+            cur.execute('DELETE FROM producto WHERE id_producto=%s', (id,))
+            conn.commit()
+        flash('Producto eliminado correctamente')
+    except Exception as e:
+        conn.rollback()
+        flash(f'Error al eliminar el producto: {str(e)}')
+    finally:
+        conn.close()
+    return redirect(url_for('inventario'))
                 
+
         
 
 @app.route('/eliminar/<int:id>')
@@ -304,165 +358,246 @@ def agregar_usuario():
 
     return redirect(url_for('dashboard'))
 
-@app.route ('/catalogo')
+@app.route('/catalogo')
 def catalogo():
-    conn = pymysql.connect(**db_config.cursors.DictCursor)
-    conn.execute("SELECT * productos")
-    productos = conn.fetchall()
+    conn = pymysql.connect(**db_config)
+    with conn.cursor(pymysql.cursors.DictCursor) as cur:
+        cur.execute("SELECT * FROM producto")
+        productos = cur.fetchall()
     conn.close()
     return render_template('catalogo.html', productos=productos)
 
+
 @app.route('/agregarCarrito/<int:id>', methods=['POST'])
 def agregarCarrito(id):
-    if 'usuario' not in session:
-        flash("Debes iniciar sesion para comprar.")
+    if 'idUsuario' not in session:
+        flash("Debes iniciar sesión para comprar.", "warning")
         return redirect(url_for('login'))
-    
-    cantidad = int (request.form['cantidad'])
-    idUsuario = session.get('idUsuario')
 
-    conn = pymysql.connect.cursor()
-    conn.execute("SELECT cantidad FROM productos WHERE idProducto =%s", (id,))
-    stock = conn.fetchall()[0]
-    conn.execute("SELECT idCarrito FROM carrito WHERE idUsuario =%s", (idUsuario,))
-    carrito = conn.fetchall()
+    cantidad = int(request.form['cantidad'])
+    idUsuario = session['idUsuario']
 
-    if not carrito:
-        conn.execute("INSERT INTO carrito(idUsuario) VALUES (%s)", (idUsuario,))
-        pymysql.connect.commit()
-        conn.execute("SELECT LAST_INSERT_ID()")
-        carrito = conn.fetchall()
+    conn = pymysql.connect(**db_config)
+    with conn.cursor() as cur:
+        # Obtener stock
+        cur.execute("SELECT cantidad FROM producto WHERE id_producto = %s", (id,))
+        stock = cur.fetchone()
+        if not stock:
+            flash("Producto no encontrado.", "danger")
+            return redirect(url_for('catalogo'))
 
-    idCarrito = carrito[0]
+        stock = stock['cantidad']
 
-    conn.execute("""SELECT cantidad FROM detalle_carrito
-                     WHERE idCarrito = %s AND idProducto =%s
-                     """,(idCarrito,id))
-    existente = conn.fetchall()
-    cantidad_total = cantidad
+        # Obtener carrito
+        cur.execute("SELECT idCarrito FROM carrito WHERE idUsuario = %s", (idUsuario,))
+        carrito = cur.fetchone()
+        if not carrito:
+            cur.execute("INSERT INTO carrito (idUsuario) VALUES (%s)", (idUsuario,))
+            conn.commit()
+            cur.execute("SELECT LAST_INSERT_ID() AS idCarrito")
+            carrito = cur.fetchone()
 
-    if existente:
-        cantidad_total += existente[0]
+        idCarrito = carrito['idCarrito']
 
-    if cantidad_total > stock:
-        flash("No puedes agregar mas unidades de las disponibles en el inventario", "warning")
-        conn.close()
-        return redirect(url_for("catalogo"))
-        
+        # Verificar si ya existe en el carrito
+        cur.execute("""
+            SELECT cantidad FROM detalle_carrito 
+            WHERE idCarrito = %s AND idProducto = %s
+        """, (idCarrito, id))
+        existente = cur.fetchone()
 
-    if existente:
-            nueva_cantidad = existente[0] + cantidad
-            conn.execute("""
-                         UPDATE detalle_carrito
-                         SET cantidad = %s
-                         WHERE idCarrito = %s AND idProducto = %s
-                         """,(nueva_cantidad, idCarrito,id))
-    else: 
-            conn.execute("""
-               INSERT INTO detalle_carrito(idCarrito, idProducto,cantidad)
-               VALUES (%s,%s,%s)
-               """,(idCarrito,id,cantidad))
+        nueva_cantidad = cantidad
+        if existente:
+            nueva_cantidad += existente['cantidad']
 
-    pymysql.connect.commit()
+        if nueva_cantidad > stock:
+            flash("No puedes agregar más unidades de las disponibles.", "warning")
+        else:
+            if existente:
+                cur.execute("""
+                    UPDATE detalle_carrito
+                    SET cantidad = %s
+                    WHERE idCarrito = %s AND idProducto = %s
+                """, (nueva_cantidad, idCarrito, id))
+            else:
+                cur.execute("""
+                    INSERT INTO detalle_carrito (idCarrito, idProducto, cantidad)
+                    VALUES (%s, %s, %s)
+                """, (idCarrito, id, cantidad))
+
+            conn.commit()
+            flash("Producto agregado al carrito.", "success")
+
     conn.close()
-
-    flash("Producto agregado al carrito")
     return redirect(url_for('catalogo'))
+
 
 @app.route('/carrito')
 def carrito():
-    if 'usuario' not in session:
-        flash("Debes iniciar sesion para comprar.")
+    if 'idUsuario' not in session:
+        flash("Debes iniciar sesión para ver tu carrito.", "warning")
         return redirect(url_for('login'))
-    
-    idUsuario = session.get('idUsuario')
 
-    conn = pymysql.connect.cursor(**db_config.cursors.DictCursor)
-    conn.execute("""
-            SELECT  p.idProducto, p.nombre_producto, p.precio, p.imagen, dc.cantidad, p.cantidad AS stock
+    idUsuario = session['idUsuario']
+    conn = pymysql.connect(**db_config)
+    with conn.cursor(pymysql.cursors.DictCursor) as cur:
+        cur.execute("""
+            SELECT p.id_producto, p.nombre_producto, p.precio, p.imagen, dc.cantidad
             FROM detalle_carrito dc
             JOIN carrito c ON dc.idCarrito = c.idCarrito
-            JOIN productos p ON de.idProducto = p.idProducto
-            WHERE c.idProducto = %s
-    """, (idUsuario,))
-    productos_carrito = conn.fetchall()
+            JOIN producto p ON dc.idProducto = p.id_producto
+            WHERE c.idUsuario = %s
+        """, (idUsuario,))
+        productos_carrito = cur.fetchall()
     conn.close()
 
-    total = sum(item['precio'] * item ['cantidad'] for item in productos_carrito)
+    total = sum(p['precio'] * p['cantidad'] for p in productos_carrito)
+    return render_template('carrito.html', productos=productos_carrito, total=total)
 
-    return render_template('carrito.html', productos=productos_carrito, total = total)
 
-@app.route('/actualizar_carrito/<int:id>', methods=["POST"])
+@app.route('/actualizar_carrito/<int:id>', methods=['POST'])
 def actualizar_carrito(id):
     accion = request.form.get("accion")
-    cantidad_actual = int(request.form.get("cantidad_actual",1))
     idUsuario = session.get("idUsuario")
 
-    if accion == "sumar":
-        nueva_cantidad = cantidad_actual +1
-    elif accion == "restar":
-        nueva_cantidad = max(1,cantidad_actual -1)
-    else:
-        nueva_cantidad = int(request.form.get("cantidad_manual", cantidad_actual))
+    conn = pymysql.connect(**db_config)
+    with conn.cursor() as cur:
+        cur.execute("""
+            SELECT dc.cantidad, p.cantidad AS stock, dc.idCarrito
+            FROM detalle_carrito dc
+            JOIN carrito c ON dc.idCarrito = c.idCarrito
+            JOIN producto p ON dc.idProducto = p.id_producto
+            WHERE c.idUsuario = %s AND dc.idProducto = %s
+        """, (idUsuario, id))
+        item = cur.fetchone()
 
+        if not item:
+            flash("Producto no encontrado en el carrito.", "danger")
+            return redirect(url_for('carrito'))
 
-    conn = pymysql.connect.cursor()
+        cantidad = item['cantidad']
+        stock = item['stock']
 
-    conn.execute("SELECT cantidad  FROM productos WHERE idProducto = %s", (id,))
-    stock = conn.fetchall()[0]
+        if accion == 'sumar':
+            cantidad += 1
+        elif accion == 'restar':
+            cantidad = max(1, cantidad - 1)
 
-    if nueva_cantidad > stock:
-        flash("No puedes exceder el niventario disponible", "warning")
-        conn.close()
-        return redirect(url_for("carrito"))
-    if nueva_cantidad > 0:
-        conn.execute("""
-                UPDATE detalle_carrito dc
-                JOIN carrito c ON dc.idCarrito= c.idCarrito
-                SET dc.cantidad = %s
-                WHERE c.idUsuario = %s AND dc,idProducto = %s
-                     """, (nueva_cantidad, idUsuario,id))
-    else:
-        conn.execute("""
-                DELETE dc FROM detalle_carrito dc
-                JOIN carrito c ON dc.idCarrito = c.idCarrito
-                WHERE c.idUsuario = %s AND dc.idProducto = %s
-                     """, (idUsuario,id))
-    pymysql.connect.commit()
+        if cantidad > stock:
+            flash("Stock insuficiente.", "warning")
+        else:
+            cur.execute("""
+                UPDATE detalle_carrito 
+                SET cantidad = %s 
+                WHERE idCarrito = %s AND idProducto = %s
+            """, (cantidad, item['idCarrito'], id))
+            conn.commit()
+            flash("Cantidad actualizada.", "success")
+
     conn.close()
+    return redirect(url_for('carrito'))
 
-    flash("carrito actualizado", "info")
-    return redirect(url_for("carrito"))
 
-@app.route("/eliminar_del_carrito/", "info")
+@app.route('/eliminar_del_carrito/<int:id>')
 def eliminar_del_carrito(id):
     idUsuario = session.get("idUsuario")
-    conn = pymysql.connect.cursor()
-    conn.execute("""
-                DELETE dc FROM detalle_carrito dc
-                JOIN carrito c ON dc.idCarrito = c.idCarrito
-                WHERE c.idUsuario = %s AND dc.idProducto = %s
-                     """, (idUsuario,id))
-    pymysql.connect.commit()
+    conn = pymysql.connect(**db_config)
+    with conn.cursor() as cur:
+        cur.execute("""
+            DELETE dc FROM detalle_carrito dc
+            JOIN carrito c ON dc.idCarrito = c.idCarrito
+            WHERE c.idUsuario = %s AND dc.idProducto = %s
+        """, (idUsuario, id))
+        conn.commit()
     conn.close()
-    flash("Producto actualizado", "danger")
-    return redirect(url_for("carrito"))
+    flash("Producto eliminado del carrito.", "danger")
+    return redirect(url_for('carrito'))
 
-@app.route("/vaciar_carrito")
+
+@app.route('/vaciar_carrito')
 def vaciar_carrito():
     idUsuario = session.get("idUsuario")
-    conn = pymysql.connect.cursor()
-    conn.execute("""
-                DELETE dc FROM detalle_carrito dc
-                JOIN carrito c ON dc.idCarrito = c.idCarrito
-                WHERE c.idUsuario = %s 
-                     """, (idUsuario,))
-    pymysql.connect.commit()
+    conn = pymysql.connect(**db_config)
+    with conn.cursor() as cur:
+        cur.execute("""
+            DELETE dc FROM detalle_carrito dc
+            JOIN carrito c ON dc.idCarrito = c.idCarrito
+            WHERE c.idUsuario = %s
+        """, (idUsuario,))
+        conn.commit()
     conn.close()
-    flash("Carrito vaciado", "warning")
-    return redirect(url_for("carrito"))
+    flash("Carrito vaciado.", "warning")
+    return redirect(url_for('carrito'))
+
+@app.route('/pago', methods=['GET', 'POST'])
+def pago():
+    if 'idUsuario' not in session:
+        flash("Debes iniciar sesión para ver tu carrito.", "warning")
+        return redirect(url_for('login'))
+
+    idUsuario = session['idUsuario']
+
+    conn = pymysql.connect(**db_config)
+    with conn.cursor(pymysql.cursors.DictCursor) as cur:
+        cur.execute("""
+            SELECT p.id_producto, p.nombre_producto, p.precio, dc.cantidad, p.cantidad AS stock
+            FROM detalle_carrito dc
+            JOIN carrito c ON dc.idCarrito = c.idCarrito
+            JOIN producto p ON dc.idProducto = p.id_producto
+            WHERE c.idUsuario = %s
+        """, (idUsuario,))
+        productos = cur.fetchall()
+
+    total = sum(p['precio'] * p['cantidad'] for p in productos)
+
+    if request.method == 'POST':
+        metodo = request.form.get('metodo_pago')
+        errores = []
+        for p in productos:
+            if p['cantidad'] > p['stock']:
+                errores.append(f"{p['nombre_producto']} excede el stock disponible")
+
+        if errores:
+            flash("Error en el pago: " + ", ".join(errores), "danger")
+            return redirect(url_for('carrito'))
+
+        codigo_transaccion = f"TXN{random.randint(100000, 999999)}"
+
+        # --- Descontar del inventario ---
+        with conn.cursor() as cur:
+            for p in productos:
+                nueva_cantidad = p['stock'] - p['cantidad']
+                cur.execute("""
+                    UPDATE producto
+                    SET cantidad = %s
+                    WHERE id_producto = %s
+                """, (nueva_cantidad, p['id_producto']))
+
+            # --- Vaciar el carrito ---
+            cur.execute("""
+                DELETE dc FROM detalle_carrito dc 
+                JOIN carrito c ON dc.idCarrito = c.idCarrito
+                WHERE c.idUsuario = %s
+            """, (idUsuario,))
+
+            conn.commit()  # ✅ AQUÍ GUARDAS TODO
+
+        conn.close()
+
+        flash(f"Pago realizado con {metodo}. Código de transacción: {codigo_transaccion}", "success")
+        return redirect(url_for('confirmar_pago', metodo=metodo, codigo=codigo_transaccion, total=total))
 
 
+    return render_template('pago.html', productos=productos, total=total)
+
+@app.route('/confirmar_pago')
+def confirmar_pago():
+    metodo = request.args.get('metodo')
+    codigo = request.args.get('codigo')
+    total = request.args.get('total')
+    return render_template('confirmar_pago.html', metodo=metodo, codigo=codigo, total=total)
+
+                    
 
 if __name__ == "__main__":
     app.run(port=5000, debug=True)
