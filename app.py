@@ -591,7 +591,7 @@ def pago():
         conn.close()
 
         flash(f"Pago realizado con {metodo}. Código de transacción: {codigo_transaccion}", "success")
-        return redirect(url_for('confirmar_pago', metodo=metodo, codigo=codigo_transaccion, total=total))
+        return redirect(url_for('confirmar_pago', metodo=metodo, codigo_transaccion=codigo_transaccion, total=total))
 
 
     return render_template('pago.html', productos=productos, total=total)
@@ -599,9 +599,13 @@ def pago():
 @app.route('/confirmar_pago')
 def confirmar_pago():
     metodo = request.args.get('metodo')
-    codigo = request.args.get('codigo')
+    codigo_transaccion = request.args.get('codigo_transaccion')  # ← así debe ser
     total = request.args.get('total')
-    return render_template('confirmar_pago.html', metodo=metodo, codigo=codigo, total=total)
+
+    return render_template('confirmar_pago.html',
+                           metodo=metodo,
+                           codigo_transaccion=codigo_transaccion,
+                           total=total)
 
                     
 
