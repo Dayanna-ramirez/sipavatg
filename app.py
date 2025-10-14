@@ -39,7 +39,7 @@ def contar_items_carrito():
         with conn.cursor() as cur:
             cur.execute("""
                 SELECT COALESCE(SUM(dc.cantidad), 0) AS total
-                FROM detalle_carrito dc
+                FROM detalles_carrito dc
                 JOIN carrito c ON dc.idCarrito = c.idCarrito
                 WHERE c.idUsuario = %s
             """, (idUsuario,))
@@ -56,24 +56,23 @@ def home_redirect():
     return redirect(url_for('login'))
 
 # Dashboard principal (pantalla después de login)
-@app.route ('/dashboard')
+@app.route('/dashboard')
 def dashboard():
-   # if 'usuario' not in session:
-    #    flash("debes iniciar sesion para acceder al dashboard.")
-     #   return redirect(url_for('login'))
+    if 'user_id' not in session:
+        flash("Debes iniciar sesión para acceder al dashboard.", "warning")
+        return redirect(url_for('login'))
 
     conn = pymysql.connect(**db_config)
     with conn:
-        with conn.cursor() as cursor:
+        with conn.cursor(pymysql.cursors.DictCursor) as cursor:
             cursor.execute("""
-            SELECT u.id_usuario, u.nombre, u.apellido, u.telefono, u.correo_electronico, ur.nombre_rol
-            FROM usuario u
-            LEFT JOIN rol_usuario ur ON u.id_rol = ur.id_rol
+                SELECT u.id_usuario, u.nombre, u.apellido, u.telefono, u.correo_electronico, ur.nombre_rol
+                FROM usuario u
+                LEFT JOIN rol_usuario ur ON u.id_rol = ur.id_rol
             """)
-            usuario = cursor.fetchall()
+            usuarios = cursor.fetchall()
 
-    cursor.close()
-    return render_template('home.html' , usuarios=usuario)
+    return render_template('home.html', usuarios=usuarios)
 # Ruta de Registro
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -85,27 +84,34 @@ def register():
         cte_correo = request.form['correo_electronico']
         password = generate_password_hash(request.form['password'])
 
-        # Guardar en base de datos
+        # Conectar a la base de datos
         conn = pymysql.connect(**db_config)
         with conn:
             with conn.cursor() as cur:
-                cur.execute("""
-                            INSERT INTO usuario (
-                        nombre, apellido, telefono, correo_electronico, clave, id_rol
-                    ) VALUES (%s, %s, %s, %s, %s,%s)
-                """, (cte_nombre, cte_apellido, cte_telefono, cte_correo, password,2))
-                conn.commit()
-                user_id = cur.lastrowid  # Obtener el ID insertado
+                # Verificar si el correo ya está registrado
+                cur.execute("SELECT id_usuario FROM usuario WHERE correo_electronico = %s", (cte_correo,))
+                existe = cur.fetchone()
 
-        # Login automático después de registro
+                if existe:
+                    flash('El correo ya está registrado. Usa otro.', 'danger')
+                    return redirect(url_for('register'))
+
+                # Insertar nuevo usuario
+                cur.execute("""
+                    INSERT INTO usuario (
+                        nombre, apellido, telefono, correo_electronico, clave, id_rol
+                    ) VALUES (%s, %s, %s, %s, %s, %s)
+                """, (cte_nombre, cte_apellido, cte_telefono, cte_correo, password, 2))
+                conn.commit()
+                user_id = cur.lastrowid
+
+        # Login automático después del registro
         session['user_id'] = user_id
         session['user_name'] = cte_nombre
-        flash('Registro exitoso. Bienvenido!', 'success')
+        flash('Registro exitoso. ¡Bienvenido!', 'success')
         return redirect(url_for('dashboard'))
 
-    return render_template('register.html')
-
-# Ruta de Login
+    return render_template('register.html')# Ruta de Login
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -114,7 +120,7 @@ def login():
         password = request.form['password']
 
         conexion = pymysql.connect(**db_config)
-        cursor = conexion.cursor()
+        cursor = conexion.cursor(pymysql.cursors.DictCursor)  # <- ¡Esto es importante!
         cursor.execute("""
             SELECT u.id_usuario, u.nombre, u.clave, r.nombre_rol
             FROM usuario u
@@ -126,8 +132,8 @@ def login():
         conexion.close()
 
         if user and check_password_hash(user['clave'], password):
-            # Guardar los datos en la sesión (nombres consistentes)
-            session['idUsuario'] = user['id_usuario']
+            # Guardar los datos en la sesión con nombres consistentes
+            session['user_id'] = user['id_usuario']
             session['rol'] = user['nombre_rol']
             session['user_name'] = user['nombre']
 
@@ -401,7 +407,7 @@ def agregarCarrito(id):
 
         # Verificar si ya existe en el carrito
         cur.execute("""
-            SELECT cantidad FROM detalle_carrito 
+            SELECT cantidad FROM detalles_carrito 
             WHERE idCarrito = %s AND idProducto = %s
         """, (idCarrito, id))
         existente = cur.fetchone()
@@ -415,13 +421,13 @@ def agregarCarrito(id):
         else:
             if existente:
                 cur.execute("""
-                    UPDATE detalle_carrito
+                    UPDATE detalles_carrito
                     SET cantidad = %s
                     WHERE idCarrito = %s AND idProducto = %s
                 """, (nueva_cantidad, idCarrito, id))
             else:
                 cur.execute("""
-                    INSERT INTO detalle_carrito (idCarrito, idProducto, cantidad)
+                    INSERT INTO detalles_carrito (idCarrito, idProducto, cantidad)
                     VALUES (%s, %s, %s)
                 """, (idCarrito, id, cantidad))
 
@@ -443,7 +449,7 @@ def carrito():
     with conn.cursor(pymysql.cursors.DictCursor) as cur:
         cur.execute("""
             SELECT p.id_producto, p.nombre_producto, p.precio, p.imagen, dc.cantidad
-            FROM detalle_carrito dc
+            FROM detalles_carrito dc
             JOIN carrito c ON dc.idCarrito = c.idCarrito
             JOIN producto p ON dc.idProducto = p.id_producto
             WHERE c.idUsuario = %s
@@ -464,7 +470,7 @@ def actualizar_carrito(id):
     with conn.cursor() as cur:
         cur.execute("""
             SELECT dc.cantidad, p.cantidad AS stock, dc.idCarrito
-            FROM detalle_carrito dc
+            FROM detalles_carrito dc
             JOIN carrito c ON dc.idCarrito = c.idCarrito
             JOIN producto p ON dc.idProducto = p.id_producto
             WHERE c.idUsuario = %s AND dc.idProducto = %s
@@ -487,7 +493,7 @@ def actualizar_carrito(id):
             flash("Stock insuficiente.", "warning")
         else:
             cur.execute("""
-                UPDATE detalle_carrito 
+                UPDATE detalles_carrito 
                 SET cantidad = %s 
                 WHERE idCarrito = %s AND idProducto = %s
             """, (cantidad, item['idCarrito'], id))
@@ -504,7 +510,7 @@ def eliminar_del_carrito(id):
     conn = pymysql.connect(**db_config)
     with conn.cursor() as cur:
         cur.execute("""
-            DELETE dc FROM detalle_carrito dc
+            DELETE dc FROM detalles_carrito dc
             JOIN carrito c ON dc.idCarrito = c.idCarrito
             WHERE c.idUsuario = %s AND dc.idProducto = %s
         """, (idUsuario, id))
@@ -520,7 +526,7 @@ def vaciar_carrito():
     conn = pymysql.connect(**db_config)
     with conn.cursor() as cur:
         cur.execute("""
-            DELETE dc FROM detalle_carrito dc
+            DELETE dc FROM detalles_carrito dc
             JOIN carrito c ON dc.idCarrito = c.idCarrito
             WHERE c.idUsuario = %s
         """, (idUsuario,))
@@ -541,7 +547,7 @@ def pago():
     with conn.cursor(pymysql.cursors.DictCursor) as cur:
         cur.execute("""
             SELECT p.id_producto, p.nombre_producto, p.precio, dc.cantidad, p.cantidad AS stock
-            FROM detalle_carrito dc
+            FROM detalles_carrito dc
             JOIN carrito c ON dc.idCarrito = c.idCarrito
             JOIN producto p ON dc.idProducto = p.id_producto
             WHERE c.idUsuario = %s
@@ -575,7 +581,7 @@ def pago():
 
             # --- Vaciar el carrito ---
             cur.execute("""
-                DELETE dc FROM detalle_carrito dc 
+                DELETE dc FROM detalles_carrito dc 
                 JOIN carrito c ON dc.idCarrito = c.idCarrito
                 WHERE c.idUsuario = %s
             """, (idUsuario,))

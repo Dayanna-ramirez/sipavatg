@@ -44,10 +44,7 @@
                 </div>
             </div>
         </a>
-        <li class="nav-item">
-        <a class="nav-link text-white" href="{{url_for('carrito')}}">
-            <i class="bi bi-cart-plus"></i>{{carrito_cantidad}}</a>
-        </li>
+      
 
         <a href="{{url_for('catalogo')}}">
             <div class="item">
@@ -72,10 +69,4 @@
             </div>
         </div>
 
-        <div class="item">
-            <div class="item-text">Catalogo</div>
-            <div class="item-icon">
-                <img src="{{ url_for('static', filename='img/Catalogo.jpg') }}" alt="inventario">
-            </div>
-        </div>
     </div>
