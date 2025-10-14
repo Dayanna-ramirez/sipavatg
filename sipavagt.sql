@@ -3,9 +3,9 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 07-10-2025 a las 02:38:05
+-- Tiempo de generación: 15-10-2025 a las 00:23:05
 -- Versión del servidor: 10.4.32-MariaDB
--- Versión de PHP: 8.2.12
+-- Versión de PHP: 8.0.30
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -24,14 +24,72 @@ SET time_zone = "+00:00";
 -- --------------------------------------------------------
 
 --
+-- Estructura de tabla para la tabla `carrito`
+--
+
+CREATE TABLE `carrito` (
+  `idCarrito` int(11) NOT NULL,
+  `idUsuario` int(11) NOT NULL,
+  `fechaCreacion` datetime DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `carrito`
+--
+
+INSERT INTO `carrito` (`idCarrito`, `idUsuario`, `fechaCreacion`) VALUES
+(1, 3, '2025-10-14 14:54:28');
+
+-- --------------------------------------------------------
+
+--
 -- Estructura de tabla para la tabla `catalogo`
 --
 
 CREATE TABLE `catalogo` (
   `id_catalogo` int(11) NOT NULL,
-  `imagen` varchar(255) DEFAULT NULL,
+  `imagen` varchar(100) DEFAULT NULL,
   `descripcion` text DEFAULT NULL,
   `ultima_actualizacion` date DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `categorias`
+--
+
+CREATE TABLE `categorias` (
+  `idCategoria` int(11) NOT NULL,
+  `nombre` varchar(100) NOT NULL,
+  `descripcion` text DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `detalles_carrito`
+--
+
+CREATE TABLE `detalles_carrito` (
+  `idDetalle` int(11) NOT NULL,
+  `idCarrito` int(11) NOT NULL,
+  `idProducto` int(11) NOT NULL,
+  `cantidad` int(11) DEFAULT 1
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `detalle_orden`
+--
+
+CREATE TABLE `detalle_orden` (
+  `idDetalle` int(11) NOT NULL,
+  `idOrden` int(11) NOT NULL,
+  `idProducto` int(11) NOT NULL,
+  `cantidad` int(11) NOT NULL,
+  `precio_unitario` decimal(10,2) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -68,12 +126,45 @@ CREATE TABLE `factura` (
 -- --------------------------------------------------------
 
 --
+-- Estructura de tabla para la tabla `inventario`
+--
+
+CREATE TABLE `inventario` (
+  `id_inventario` int(11) NOT NULL,
+  `cantidad` int(11) NOT NULL,
+  `advertencia_stock` varchar(50) DEFAULT NULL,
+  `fecha_ingreso` date DEFAULT NULL,
+  `fecha_retiro` date DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Estructura de tabla para la tabla `metodo_pago`
 --
 
 CREATE TABLE `metodo_pago` (
   `id_metodo` int(11) NOT NULL,
   `tipo` varchar(50) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `ordenes`
+--
+
+CREATE TABLE `ordenes` (
+  `idOrden` int(11) NOT NULL,
+  `idUsuario` int(11) NOT NULL,
+  `fecha` datetime DEFAULT current_timestamp(),
+  `estado` varchar(50) DEFAULT 'pendiente',
+  `total` decimal(10,2) DEFAULT NULL,
+  `metodo_pago` varchar(100) DEFAULT NULL,
+  `referencia_pago` varchar(100) DEFAULT NULL,
+  `fecha_pago` datetime DEFAULT NULL,
+  `idMetodo` int(11) DEFAULT NULL,
+  `id_metodo` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -86,21 +177,21 @@ CREATE TABLE `producto` (
   `id_producto` int(11) NOT NULL,
   `nombre_producto` varchar(80) DEFAULT NULL,
   `precio` decimal(10,2) DEFAULT NULL,
-  `cantidad` int(11) NOT NULL,
-  `imagen` varchar(255) NOT NULL,
   `fecha_elaboracion` date DEFAULT NULL,
   `id_catalogo` int(11) DEFAULT NULL,
   `id_inventario` int(11) DEFAULT NULL,
-  `id_categoria` int(11) DEFAULT NULL
+  `id_categoria` int(11) DEFAULT NULL,
+  `idCategoria` int(11) DEFAULT NULL,
+  `cantidad` int(11) NOT NULL,
+  `imagen` varchar(255) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Volcado de datos para la tabla `producto`
 --
 
-INSERT INTO `producto` (`id_producto`, `nombre_producto`, `precio`, `cantidad`, `imagen`, `fecha_elaboracion`, `id_catalogo`, `id_inventario`, `id_categoria`) VALUES
-(1, 'ad', 12.00, 12, 's-l1600.webp', NULL, NULL, NULL, NULL),
-(2, 'zxczx', 123.00, 4, 'collar-para-dama-collares-mayoreo-bisuteria-fina-D_NQ_NP_139425-MLM25445564656_032017-F.jpg', NULL, NULL, NULL, NULL);
+INSERT INTO `producto` (`id_producto`, `nombre_producto`, `precio`, `fecha_elaboracion`, `id_catalogo`, `id_inventario`, `id_categoria`, `idCategoria`, `cantidad`, `imagen`) VALUES
+(1, 'vestido', 600000.00, NULL, NULL, NULL, NULL, NULL, 29, 'Comic_De_Riesgos.png');
 
 -- --------------------------------------------------------
 
@@ -133,8 +224,8 @@ CREATE TABLE `rol_usuario` (
 --
 
 INSERT INTO `rol_usuario` (`id_rol`, `nombre_rol`, `nivel_acceso`) VALUES
-(1, 'Admin', 1),
-(2, 'Usuario', 2);
+(1, 'Admin', NULL),
+(2, 'Usuario', NULL);
 
 -- --------------------------------------------------------
 
@@ -148,7 +239,7 @@ CREATE TABLE `usuario` (
   `apellido` varchar(50) NOT NULL,
   `telefono` varchar(20) DEFAULT NULL,
   `correo_electronico` varchar(100) DEFAULT NULL,
-  `cedula` int(11) DEFAULT NULL,
+  `edad` int(11) DEFAULT NULL,
   `fecha_registro` date DEFAULT NULL,
   `clave` varchar(255) DEFAULT NULL,
   `id_rol` int(11) DEFAULT NULL
@@ -158,16 +249,10 @@ CREATE TABLE `usuario` (
 -- Volcado de datos para la tabla `usuario`
 --
 
-INSERT INTO `usuario` (`id_usuario`, `nombre`, `apellido`, `telefono`, `correo_electronico`, `cedula`, `fecha_registro`, `clave`, `id_rol`) VALUES
-(3, 'david', 'perezfg', '3227122202', 'usechedavid525@gmail.com', 1023901661, NULL, 'scrypt:32768:8:1$QHThX4PfuL7LIJX1$f8e29df003c8e16e9555604c44693a3d2ab8f0145452fa76821a63cc28e3b3e5db9410933f281888643fa383f1469885421069a3658930a0bc643f41a8053ea9', 1),
-(4, 'helen', 'silva', '3227122202', 'helensilvabravo@gmial.com', 1023901661, NULL, 'scrypt:32768:8:1$pdJdYzMFUFmW5Zd2$90d0f975fcc3de0397d33de03888da802f532f077fa67d9ef12a3692f4c37680cf3314ee653bbd230e0d0bee6556b36dc532c250da69c46671918d2052ddee39', NULL),
-(5, 'dayanna', 'ramirez', '3222352746', 'dvrg2612ramirez@gmail.com', 1021679171, NULL, 'scrypt:32768:8:1$1uT4FzfhE73RuFqZ$011407640b132bd5fe84210055dbd842caa57682c57215a1f7ef588c660e3e2fe4b18e6eedfc3e98a27183323b8d06eab2132779fea8b281e7c6329354b6eaba', 2),
-(6, 'angela', 'fonseca', '1234', 'a@gmail.com', 123456, NULL, 'scrypt:32768:8:1$ERpyi21nAXtMWfoL$0296e1d3aa5014d304fcb46f19016779cbc58d58979ad9b03f5aae8851490b73037185dccb1584c1e9824a47c3ea59c6533d37017920d0929fcd70035b1c68ff', 1),
-(7, 'aaaaaaa', 'sss', '211223', 'dsassx@ghg', 22226661, NULL, 'scrypt:32768:8:1$1maJQNsLrz3X5VJe$cc316826e0d6c9c5ae611f0e36c2d7f9c7375b602a7febe8c5816a7d672ead02e56ddcaee389b508a1efaaa832664ab5ce63cd74ecdc68bfbc6f27ee1c60074a', 2),
-(11, 'vvvvv', 'vvvvv', '211223', 'fdsfsd@dfdsfgsd', 22226661, NULL, 'scrypt:32768:8:1$cTh5zLQ6fLZpZ551$e7435e1ff07104fcb13f060b271a0035e1430f30f6c5dd675d67df816fd92a3923cc2dded0a1bedfca66ed542518838d6e3a9a12573cfb4c36d80988e3f2634c', 2),
-(13, 'bbbb', 'bbbb', 'bbbbb', 'bbbbbb@vvvvv', 223334444, NULL, 'scrypt:32768:8:1$7kki1bsWf0KrogwU$4ad959f1c6efb273b3ddc93fbfaf17e5c4f55da216ad97ad0b75ac93c47471de813025a54fcb6ac25c0364d83545830e62397b90949bc37d08d7cf54706dc4eb', NULL),
-(14, 'a', 'a', '123', 'a@a', NULL, NULL, 'scrypt:32768:8:1$y6FEar36eRYLgFcY$083d1994990815147d27e8d20d2853426afcb98935ef92fd2059d3fa9dc009bc38ebf041268ff3245503c4b6cbd1d7bda6b7e0afa11db06185a68e475a9a32db', 2),
-(15, 'asd', 'asd', '123', 'asd@asd', NULL, NULL, NULL, 1);
+INSERT INTO `usuario` (`id_usuario`, `nombre`, `apellido`, `telefono`, `correo_electronico`, `edad`, `fecha_registro`, `clave`, `id_rol`) VALUES
+(3, 'julieth', 'sarmiento ', '32222444485', 'va7en2009@gmail.com', NULL, NULL, 'scrypt:32768:8:1$XUXcQg9qgYk9Vbmd$7e2199ae715cde7feba93f8adb5399ba92efdd718fff5c47ad9cde41106970fa0033b1c7fbd33c27d00d5aa8b4aa82ef04bbf2f76de35f1962788b43b30c1f39', 2),
+(5, 'julieth', 'sarmiento ', '32222444485', 'va7en2009@gmail.com2', NULL, NULL, 'scrypt:32768:8:1$dLcQMNcQHeK6FvaA$20029be059cc847cac44e1a31fb04662d636c4ef7a1d598cb1f2d0b6843b91ba8446d0d738cf323acc8cafbde3e312da6f0b89a8e60675262efd7fc1aa5a9642', 2),
+(6, 'julieth', 'sarmiento', '32222444485', 'va7en2009@gmail.com3', NULL, NULL, 'scrypt:32768:8:1$OJIBZfWTFYJANiG5$09c7fa6c5c50648442a024667670dbb7c347ae9d57e05dd5b3d218b1d69795b5c8fa18586ee8451c56a558861e9b3fb9f9f9b48c84a8698e22c546107748a2d5', 2);
 
 -- --------------------------------------------------------
 
@@ -188,10 +273,39 @@ CREATE TABLE `venta` (
 --
 
 --
+-- Indices de la tabla `carrito`
+--
+ALTER TABLE `carrito`
+  ADD PRIMARY KEY (`idCarrito`),
+  ADD KEY `idUsuario` (`idUsuario`);
+
+--
 -- Indices de la tabla `catalogo`
 --
 ALTER TABLE `catalogo`
   ADD PRIMARY KEY (`id_catalogo`);
+
+--
+-- Indices de la tabla `categorias`
+--
+ALTER TABLE `categorias`
+  ADD PRIMARY KEY (`idCategoria`);
+
+--
+-- Indices de la tabla `detalles_carrito`
+--
+ALTER TABLE `detalles_carrito`
+  ADD PRIMARY KEY (`idDetalle`),
+  ADD KEY `idCarrito` (`idCarrito`),
+  ADD KEY `idProducto` (`idProducto`);
+
+--
+-- Indices de la tabla `detalle_orden`
+--
+ALTER TABLE `detalle_orden`
+  ADD PRIMARY KEY (`idDetalle`),
+  ADD KEY `idOrden` (`idOrden`),
+  ADD KEY `idProducto` (`idProducto`);
 
 --
 -- Indices de la tabla `envio`
@@ -208,10 +322,24 @@ ALTER TABLE `factura`
   ADD PRIMARY KEY (`id_factura`);
 
 --
+-- Indices de la tabla `inventario`
+--
+ALTER TABLE `inventario`
+  ADD PRIMARY KEY (`id_inventario`);
+
+--
 -- Indices de la tabla `metodo_pago`
 --
 ALTER TABLE `metodo_pago`
   ADD PRIMARY KEY (`id_metodo`);
+
+--
+-- Indices de la tabla `ordenes`
+--
+ALTER TABLE `ordenes`
+  ADD PRIMARY KEY (`idOrden`),
+  ADD KEY `idUsuario` (`idUsuario`),
+  ADD KEY `id_metodo` (`id_metodo`);
 
 --
 -- Indices de la tabla `producto`
@@ -219,7 +347,8 @@ ALTER TABLE `metodo_pago`
 ALTER TABLE `producto`
   ADD PRIMARY KEY (`id_producto`),
   ADD KEY `id_catalogo` (`id_catalogo`),
-  ADD KEY `id_inventario` (`id_inventario`);
+  ADD KEY `id_inventario` (`id_inventario`),
+  ADD KEY `idCategoria` (`idCategoria`);
 
 --
 -- Indices de la tabla `proveedor`
@@ -255,10 +384,34 @@ ALTER TABLE `venta`
 --
 
 --
+-- AUTO_INCREMENT de la tabla `carrito`
+--
+ALTER TABLE `carrito`
+  MODIFY `idCarrito` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
 -- AUTO_INCREMENT de la tabla `catalogo`
 --
 ALTER TABLE `catalogo`
-  MODIFY `id_catalogo` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `id_catalogo` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de la tabla `categorias`
+--
+ALTER TABLE `categorias`
+  MODIFY `idCategoria` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de la tabla `detalles_carrito`
+--
+ALTER TABLE `detalles_carrito`
+  MODIFY `idDetalle` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT de la tabla `detalle_orden`
+--
+ALTER TABLE `detalle_orden`
+  MODIFY `idDetalle` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT de la tabla `envio`
@@ -273,16 +426,28 @@ ALTER TABLE `factura`
   MODIFY `id_factura` int(11) NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT de la tabla `inventario`
+--
+ALTER TABLE `inventario`
+  MODIFY `id_inventario` int(11) NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT de la tabla `metodo_pago`
 --
 ALTER TABLE `metodo_pago`
   MODIFY `id_metodo` int(11) NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT de la tabla `ordenes`
+--
+ALTER TABLE `ordenes`
+  MODIFY `idOrden` int(11) NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT de la tabla `producto`
 --
 ALTER TABLE `producto`
-  MODIFY `id_producto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id_producto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT de la tabla `proveedor`
@@ -300,7 +465,7 @@ ALTER TABLE `rol_usuario`
 -- AUTO_INCREMENT de la tabla `usuario`
 --
 ALTER TABLE `usuario`
-  MODIFY `id_usuario` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
+  MODIFY `id_usuario` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT de la tabla `venta`
@@ -313,11 +478,60 @@ ALTER TABLE `venta`
 --
 
 --
+-- Filtros para la tabla `carrito`
+--
+ALTER TABLE `carrito`
+  ADD CONSTRAINT `carrito_ibfk_1` FOREIGN KEY (`idUsuario`) REFERENCES `usuario` (`id_usuario`);
+
+--
+-- Filtros para la tabla `detalles_carrito`
+--
+ALTER TABLE `detalles_carrito`
+  ADD CONSTRAINT `detalles_carrito_ibfk_1` FOREIGN KEY (`idCarrito`) REFERENCES `carrito` (`idCarrito`),
+  ADD CONSTRAINT `detalles_carrito_ibfk_2` FOREIGN KEY (`idProducto`) REFERENCES `producto` (`id_producto`);
+
+--
+-- Filtros para la tabla `detalle_orden`
+--
+ALTER TABLE `detalle_orden`
+  ADD CONSTRAINT `detalle_orden_ibfk_1` FOREIGN KEY (`idOrden`) REFERENCES `ordenes` (`idOrden`),
+  ADD CONSTRAINT `detalle_orden_ibfk_2` FOREIGN KEY (`idProducto`) REFERENCES `producto` (`id_producto`);
+
+--
 -- Filtros para la tabla `envio`
 --
 ALTER TABLE `envio`
   ADD CONSTRAINT `envio_ibfk_1` FOREIGN KEY (`id_venta`) REFERENCES `venta` (`id_venta`),
   ADD CONSTRAINT `envio_ibfk_2` FOREIGN KEY (`id_metodo`) REFERENCES `metodo_pago` (`id_metodo`);
+
+--
+-- Filtros para la tabla `ordenes`
+--
+ALTER TABLE `ordenes`
+  ADD CONSTRAINT `ordenes_ibfk_1` FOREIGN KEY (`idUsuario`) REFERENCES `usuario` (`id_usuario`),
+  ADD CONSTRAINT `ordenes_ibfk_2` FOREIGN KEY (`id_metodo`) REFERENCES `metodo_pago` (`id_metodo`);
+
+--
+-- Filtros para la tabla `producto`
+--
+ALTER TABLE `producto`
+  ADD CONSTRAINT `producto_ibfk_1` FOREIGN KEY (`id_catalogo`) REFERENCES `catalogo` (`id_catalogo`),
+  ADD CONSTRAINT `producto_ibfk_2` FOREIGN KEY (`id_inventario`) REFERENCES `inventario` (`id_inventario`),
+  ADD CONSTRAINT `producto_ibfk_3` FOREIGN KEY (`idCategoria`) REFERENCES `categorias` (`idCategoria`);
+
+--
+-- Filtros para la tabla `usuario`
+--
+ALTER TABLE `usuario`
+  ADD CONSTRAINT `usuario_ibfk_1` FOREIGN KEY (`id_rol`) REFERENCES `rol_usuario` (`id_rol`);
+
+--
+-- Filtros para la tabla `venta`
+--
+ALTER TABLE `venta`
+  ADD CONSTRAINT `venta_ibfk_1` FOREIGN KEY (`id_usuario`) REFERENCES `usuario` (`id_usuario`),
+  ADD CONSTRAINT `venta_ibfk_2` FOREIGN KEY (`id_producto`) REFERENCES `producto` (`id_producto`),
+  ADD CONSTRAINT `venta_ibfk_3` FOREIGN KEY (`id_factura`) REFERENCES `factura` (`id_factura`);
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
