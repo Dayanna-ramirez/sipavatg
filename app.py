@@ -16,9 +16,11 @@ from email.mime.text import MIMEText
 def generar_token(email):
     token =secrets.token_urlsafe(32)
     expiry =datetime.now() + timedelta(hours=1)
-    conn = pymysql.connect.cursor()
-    conn.execute("UPDATE usuario SET reset_token= %s, token_expiry= %s WHERE correo_electronico = %s", (token, expiry,email))
-    pymysql.connect.commit()
+    conn = pymysql.connect(**db_config)
+    cursor = conn.cursor()
+    cursor.execute("UPDATE usuario SET reset_token= %s, token_expiry= %s WHERE correo_electronico = %s", (token, expiry,email))
+    conn.commit()
+    cursor.close()
     conn.close()
     return token 
 
@@ -38,7 +40,7 @@ def enviar_correo_reset(email,token):
     mensaje['From']= 'secureloginnoresponder@gmail.com'
     mensaje ['To']= email
 
-    server = smtplib.SMTP('smtp.gmail.com,587')
+    server = smtplib.SMTP('smtp.gmail.com',587)
     server.starttls()
     server.login(remitente,clave)
     server.sendmail(remitente,email,mensaje.as_string())
@@ -191,13 +193,15 @@ def logout():
     return redirect(url_for('login'))
 
 # Ruta para recuperar la contraseña
+@app.route('/forgot', methods =['GET','POST'])
 def forgot():
     if request.method == 'POST':
         email = request.form['email']
-
-        conn = pymysql.connect.cursor()
-        conn.execute("SELECT id_usuario FROM usuario WHERE correo_electronico = %s", (email,))
-        existe = conn.fetchone()
+        conn = pymysql.connect(**db_config)
+        cursor = conn.cursor()
+        cursor.execute("SELECT id_usuario FROM usuario WHERE correo_electronico = %s", (email,))
+        existe = cursor.fetchone()
+        cursor.close()
         conn.close()
 
         if not existe:
@@ -214,9 +218,10 @@ def forgot():
 # Ruta para completar la recuperacion de la contraseña
 @app.route('/reset/<token>', methods =['GET','POST'])
 def reset (token):
-    conn = pymysql.connect.cursor()
-    conn.execute("SELECT id_usuario, token_expiry FROM usuario WHERE reset_token = %s", (token,))
-    usuario = conn.fetchone()
+    conn = pymysql.connect(**db_config)
+    cursor = conn.cursor()
+    cursor.execute("SELECT id_usuario, token_expiry FROM usuario WHERE reset_token = %s", (token,))
+    usuario = cursor.fetchone()
     conn.close()
 
     if not usuario or datetime.now() >usuario [1]:
