@@ -22,7 +22,8 @@
                 <button type="submit" class="btn-login">Ingresar</button>
             </form>
             <p class="register-link">¿No tienes cuenta? <a href="{{ url_for('register') }}">Regístrate</a></p>
-            <p class="forgot-link"><a href="{{ url_for('forgot_password') }}">¿Olvidaste tu contraseña?</a></p>
+            <p class="forgot-link">
+            <a href="{{ url_for('forgot')}}" class="link-primary text-decoration-none">¿olvidaste tu Contraseña?</a>
         </div>
     </div>
 </body>

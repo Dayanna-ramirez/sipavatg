@@ -7,6 +7,43 @@ import random
 import os
 from functools import wraps  # Para el decorador login_required
 
+import secrets
+from datetime import datetime, timedelta
+import smtplib
+from email.mime.text import MIMEText    
+
+#Funcion para generar token de recuperacion
+def generar_token(email):
+    token =secrets.token_urlsafe(32)
+    expiry =datetime.now() + timedelta(hours=1)
+    conn = pymysql.connect.cursor()
+    conn.execute("UPDATE usuario SET reset_token= %s, token_expiry= %s WHERE correo_electronico = %s", (token, expiry,email))
+    pymysql.connect.commit()
+    conn.close()
+    return token 
+
+#Funcion para enviar el correo con enlace de recuperacion 
+
+def enviar_correo_reset(email,token):
+    enlace = url_for('reset', token = token, _external=True)
+    cuerpo = f"""Hola, Solicitaste recuperar tu contraseña. Haz click en el siguiente enlace:
+    {enlace}
+    Este enlace expirara en 1 hora.
+    Si no lo solicitaste, ignora este mensaje. """
+
+    remitente = 'secureloginnoresponder@gmail.com'
+    clave = 'cjhc bwnp tuwu myls'
+    mensaje = MIMEText(cuerpo)
+    mensaje['Subject'] = 'Recuperar contraseña'
+    mensaje['From']= 'secureloginnoresponder@gmail.com'
+    mensaje ['To']= email
+
+    server = smtplib.SMTP('smtp.gmail.com,587')
+    server.starttls()
+    server.login(remitente,clave)
+    server.sendmail(remitente,email,mensaje.as_string())
+    server.quit()
+
 app = Flask(__name__)
 app.secret_key = 'clave_super_secreta'
 
@@ -153,15 +190,53 @@ def logout():
     flash('Sesión cerrada.', 'info')
     return redirect(url_for('login'))
 
-# Ruta para Olvidar Contraseña
-@app.route('/forgot-password', methods=['GET', 'POST'])
-def forgot_password():
+# Ruta para recuperar la contraseña
+def forgot():
     if request.method == 'POST':
         email = request.form['email']
-        flash(f'Se ha enviado un correo a {email} para recuperar la contraseña (simulado).', 'info')
-        return redirect(url_for('login'))
 
+        conn = pymysql.connect.cursor()
+        conn.execute("SELECT id_usuario FROM usuario WHERE correo_electronico = %s", (email,))
+        existe = conn.fetchone()
+        conn.close()
+
+        if not existe:
+            flash("Este correo no esta registrado.")
+            return redirect(url_for('forgot'))
+        
+        token = generar_token(email)
+        enviar_correo_reset(email,token)
+
+        flash ("Te enviamos un correo con el enlace para restablecer tu contraseña")
+        return redirect(url_for('login'))
     return render_template('restored.html')
+
+# Ruta para completar la recuperacion de la contraseña
+@app.route('/reset/<token>', methods =['GET','POST'])
+def reset (token):
+    conn = pymysql.connect.cursor()
+    conn.execute("SELECT id_usuario, token_expiry FROM usuario WHERE reset_token = %s", (token,))
+    usuario = conn.fetchone()
+    conn.close()
+
+    if not usuario or datetime.now() >usuario [1]:
+        flash ("Token invalido o expirado.")
+        return redirect(url_for('forgot'))
+    
+    if request.method == 'POST':
+        nuevo_password = request.form ['password']
+        hash_nueva = generate_password_hash(nuevo_password)
+
+        conn = pymysql.connect.cursor()
+        conn.execute("UPDATE usuario SET password =%s, reset_token=NULL, token_expiry=NULL WHERE id_usuario=%s", (hash_nueva, usuario[0]))
+        pymysql.connect.commit()
+        conn.close()
+
+        flash ("Tu contraseña se ha actualizad0.")
+        return redirect(url_for('login'))
+    
+    return render_template('reset.html')
+      
 
 # ----------------- CRUD RUTAS (Protegidas) ------------------
 
