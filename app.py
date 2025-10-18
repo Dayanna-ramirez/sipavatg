@@ -7,8 +7,62 @@ import random
 import os
 from functools import wraps  # Para el decorador login_required
 
-app = Flask(__name__)
+app = Flask(_name_)
 app.secret_key = 'clave_super_secreta'
+
+app = Flask(_name_)
+app.secret_key = 'clave_super_secreta'
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USERNAME'] = 'sipavatg@gmail.com'
+app.config['MAIL_PASSWORD'] = '123456789'
+app.config['MAIL_DEFAULT_SENDER'] = 'sipavatg@gmail.com'
+
+mail = Mail(app)
+
+def enviar_alerta(destinatario, asunto, mensaje):
+    msg = Message(asunto, recipients=[destinatario])
+    msg.body = mensaje
+    mail.send(msg)
+
+# ------------------- FUNCIÓN PARA ENVIAR ALERTAS -------------------
+def enviar_alerta(destinatario, asunto, mensaje):
+    """Envía un correo de alerta a un destinatario específico."""
+    try:
+        msg = Message(asunto, recipients=[destinatario])
+        msg.body = mensaje
+        mail.send(msg)
+        print(f"✅ Correo enviado a {destinatario}")
+    except Exception as e:
+        print(f"❌ Error al enviar correo: {e}")
+
+# ------------------- RUTA DE PRUEBA -------------------
+@app.route('/enviar_prueba')
+def enviar_prueba():
+    destinatario = 'sipavatg@gmail.com'  # puedes cambiarlo por otro correo para probar
+    enviar_alerta(destinatario, 'Prueba de alerta', '¡Hola Helen! Este es un correo de prueba desde Flask.')
+    return 'Correo de prueba enviado (ver consola y bandeja de entrada).'
+
+# ------------------- RUTA PRINCIPAL -------------------
+@app.route('/')
+def index():
+    return '<h2>Bienvenida a SIPAVATG 📧 <a href="/enviar_prueba">Enviar correo de prueba</a></h2>'
+
+
+
+# ---------------- CONFIGURACIÓN DEL CORREO ----------------
+from flask_mail import Mail, Message
+
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USERNAME'] = 'sipavatg@gmail.com'  # Tu correo
+app.config['MAIL_PASSWORD'] = 'tu_contraseña_de_aplicación'  # ⚠️ Aquí NO pongas tu contraseña normal
+app.config['MAIL_DEFAULT_SENDER'] = ('SIPAVAGT', 'sipavatg@gmail.com')
+
+mail = Mail(app)
+
 
 # Configuración de la base de datos 
 db_config = {
@@ -605,5 +659,5 @@ def confirmar_pago():
 
                     
 
-if __name__ == "__main__":
+if _name_ == "_main_":
     app.run(port=5000, debug=True)
