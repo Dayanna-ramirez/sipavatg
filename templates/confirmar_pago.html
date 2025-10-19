@@ -9,5 +9,7 @@
     <p>Código de transacción: <strong>{{ codigo_transaccion }}</strong></p>
     <p>Total Pagado: <strong>${{ "{:,.0f}".format(total | float) }}</strong></p>
     <a href="{{ url_for('catalogo') }}" class="btn btn-success">Volver al Catálogo</a>
+    <!-- Al final del body, antes de cerrar </body> -->
+{% include 'footer_boutique.html' %}
 </div>
 {% endblock %}
