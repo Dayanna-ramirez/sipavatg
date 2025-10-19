@@ -9,9 +9,6 @@ from functools import wraps  # Para el decorador login_required
 
 app = Flask(_name_)
 app.secret_key = 'clave_super_secreta'
-
-app = Flask(_name_)
-app.secret_key = 'clave_super_secreta'
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
@@ -45,6 +42,7 @@ def enviar_prueba():
     return 'Correo de prueba enviado (ver consola y bandeja de entrada).'
 
 # ------------------- RUTA PRINCIPAL -------------------
+
 @app.route('/')
 def index():
     return '<h2>Bienvenida a SIPAVATG 📧 <a href="/enviar_prueba">Enviar correo de prueba</a></h2>'
