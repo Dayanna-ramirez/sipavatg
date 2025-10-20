@@ -1,0 +1,183 @@
+/* Footer Boutique Elegante - Colores Morado, Azul y Blanco */
+.boutique-footer {
+    background: linear-gradient(135deg, #3a0ca3 0%, #4361ee 100%);
+    color: #ffffff;
+    padding: 50px 0 20px;
+    margin-top: 80px;
+    border-top: 3px solid #7209b7;
+    font-family: 'Playfair Display', serif;
+}
+
+.footer-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 40px;
+    padding: 0 20px;
+}
+
+.footer-section h3 {
+    color: #bdb2ff;
+    font-size: 18px;
+    margin-bottom: 20px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    border-bottom: 2px solid #7209b7;
+    padding-bottom: 10px;
+}
+
+.footer-section p, 
+.footer-section a {
+    color: #e0e0ff;
+    line-height: 1.8;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.footer-section a:hover {
+    color: #4cc9f0;
+}
+
+/* Redes sociales */
+.social-links-boutique {
+    display: flex;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.social-icon-boutique {
+    width: 40px;
+    height: 40px;
+    background: #7209b7;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    font-size: 18px;
+}
+
+.social-icon-boutique:hover {
+    background: #4cc9f0;
+    transform: translateY(-3px);
+}
+
+/* Contacto */
+.contact-info {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.contact-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.contact-item i {
+    color: #4cc9f0;
+    width: 20px;
+}
+
+/* Newsletter */
+.newsletter-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.newsletter-input {
+    padding: 12px;
+    border: 1px solid #4cc9f0;
+    border-radius: 25px;
+    background: rgba(255,255,255,0.8);
+    color: #3a0ca3;
+    font-family: inherit;
+}
+
+.newsletter-btn {
+    background: #7209b7;
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.newsletter-btn:hover {
+    background: #4cc9f0;
+}
+
+/* Métodos de pago */
+.payment-methods {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+    flex-wrap: wrap;
+}
+
+.payment-icon {
+    width: 40px;
+    height: 25px;
+    background: white;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    color: #3a0ca3;
+    border: 1px solid #ddd;
+}
+
+/* Parte inferior */
+.footer-bottom {
+    max-width: 1200px;
+    margin: 40px auto 0;
+    padding: 20px;
+    border-top: 1px solid #4cc9f0;
+    text-align: center;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.footer-links {
+    display: flex;
+    gap: 20px;
+}
+
+.footer-links a {
+    color: #bdb2ff;
+    text-decoration: none;
+    font-size: 14px;
+}
+
+.footer-links a:hover {
+    color: #4cc9f0;
+}
+
+.copyright {
+    color: #e0e0ff;
+    font-size: 14px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .footer-container {
+        grid-template-columns: 1fr;
+        gap: 30px;
+    }
+    
+    .footer-bottom {
+        flex-direction: column;
+        gap: 15px;
+    }
+}

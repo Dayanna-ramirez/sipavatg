@@ -1,15 +1,17 @@
 {% extends 'base.html' %}
 
-{% block title %}Confirmación de pago{% endblock %}
+{% block title %}Confirmacion de pago{% endblock %}
 
 {% block content %}
+
 <div class="text-center mt-5">
     <h2>Gracias por tu compra</h2>
-    <p>Método de pago: <strong>{{ metodo }}</strong></p>
+    <p>Metodo de pago: <strong>{{ metodo }}</strong></p>
     <p>Código de transacción: <strong>{{ codigo_transaccion }}</strong></p>
     <p>Total Pagado: <strong>${{ "{:,.0f}".format(total | float) }}</strong></p>
-    <a href="{{ url_for('catalogo') }}" class="btn btn-success">Volver al Catálogo</a>
+    <a href="{{url_for('catalogo')}}" class="btn btn-success">Volver al Catálogo</a>
     <!-- Al final del body, antes de cerrar </body> -->
 {% include 'footer_boutique.html' %}
 </div>
+
 {% endblock %}

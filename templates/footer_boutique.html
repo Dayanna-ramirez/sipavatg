@@ -1,0 +1,91 @@
+{# FOOTER - LA BOUTIQUE ELEGANTE
+  Archivo: templates/footer.html
+  Autor: Helen Sharay
+  Descripción:
+  Pie de página con secciones de contacto, redes, enlaces rápidos y suscripción.#}
+
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <!-- Íconos Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  
+  <!-- Fuente elegante de Google -->
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Estilos generales del sitio -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='footer.css') }}">
+</head>
+
+<body>
+  <footer class="boutique-footer">
+    <div class="footer-container">
+
+      <!-- 🌸 SECCIÓN 1: SOBRE NOSOTROS -->
+      <div class="footer-section">
+        <h3>La Boutique</h3>
+        <p>Desde 2010, ofrecemos las últimas tendencias en moda con elegancia y estilo único. Donde cada prenda cuenta una historia.</p>
+        <div class="social-links-boutique">
+          <a href="https://instagram.com/tuboutique" class="social-icon-boutique" target="_blank"><i class="fab fa-instagram"></i></a>
+          <a href="https://facebook.com/tuboutique" class="social-icon-boutique" target="_blank"><i class="fab fa-facebook-f"></i></a>
+          <a href="https://pinterest.com/tuboutique" class="social-icon-boutique" target="_blank"><i class="fab fa-pinterest-p"></i></a>
+          <a href="https://tiktok.com/@tuboutique" class="social-icon-boutique" target="_blank"><i class="fab fa-tiktok"></i></a>
+        </div>
+      </div>
+
+      <!-- 💎 SECCIÓN 2: ENLACES RÁPIDOS -->
+      <div class="footer-section">
+        <h3>Enlaces Rápidos</h3>
+        <div class="footer-links-list">
+          <a href="#">Nueva Colección</a>
+          <a href="#">Vestidos de Noche</a>
+          <a href="#">Ropa de Temporada</a>
+          <a href="#">Accesorios</a>
+          <a href="#">Ofertas Especiales</a>
+          <a href="#">Lookbook</a>
+        </div>
+      </div>
+
+      <!-- 💌 SECCIÓN 3: CONTACTO -->
+      <div class="footer-section">
+        <h3>Contacto</h3>
+        <div class="contact-info">
+          <div class="contact-item"><i class="fas fa-map-marker-alt"></i><span>Avenida Elegante 123, Ciudad Moda</span></div>
+          <div class="contact-item"><i class="fas fa-phone"></i><span>+1 (555) 123-4567</span></div>
+          <div class="contact-item"><i class="fas fa-envelope"></i><span>hola@laboutique.com</span></div>
+          <div class="contact-item"><i class="fas fa-clock"></i><span>Lun-Sáb: 10:00 - 20:00</span></div>
+        </div>
+      </div>
+
+      <!-- 💖 SECCIÓN 4: NEWSLETTER -->
+      <div class="footer-section">
+        <h3>Newsletter</h3>
+        <p>Suscríbete para recibir novedades, promociones exclusivas y tips de estilo.</p>
+        <form class="newsletter-form">
+          <input type="email" class="newsletter-input" placeholder="Tu email elegante..." required>
+          <button type="submit" class="newsletter-btn">Suscribirse</button>
+        </form>
+        <div class="payment-methods">
+          <div class="payment-icon">VISA</div>
+          <div class="payment-icon">MC</div>
+          <div class="payment-icon">AMEX</div>
+          <div class="payment-icon">PP</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 🌿 PARTE INFERIOR DEL FOOTER -->
+    <div class="footer-bottom">
+      <div class="copyright">
+        &copy; 2025 La Boutique Elegante. Todos los derechos reservados.
+      </div>
+      <div class="footer-links">
+        <a href="#">Política de Privacidad</a>
+        <a href="#">Términos y Condiciones</a>
+        <a href="#">Política de Devoluciones</a>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>
