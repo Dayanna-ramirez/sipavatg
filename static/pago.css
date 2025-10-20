@@ -1,0 +1,154 @@
+/* RESET */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    background: #f4f4ff; /* azul muy claro */
+    color: #333;
+}
+
+/* CONTENEDOR CENTRAL */
+.container {
+    max-width: 650px;
+    margin: 40px auto;
+    padding: 30px;
+    background: #ffffff;
+    border-radius: 15px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+}
+
+/* HEADER */
+.header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.header h1 {
+    color: #6a0dad; /* morado fuerte */
+    font-size: 2.2em;
+}
+
+.header p {
+    color: #5a5f9f; /* azul */
+    font-size: 1.1em;
+}
+
+/* RESUMEN PEDIDO */
+.resumen-pedido {
+    background: #f0f0ff; /* azul muy suave */
+    padding: 25px;
+    border-radius: 12px;
+    margin-bottom: 30px;
+}
+
+.resumen-pedido h3 {
+    color: #6a0dad;
+    margin-bottom: 15px;
+    border-bottom: 2px solid #6a0dad;
+    padding-bottom: 8px;
+}
+
+.producto-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid #dcdcff;
+}
+
+.total-final {
+    font-size: 1.5em;
+    font-weight: bold;
+    color: #5a5f9f;
+    text-align: center;
+    margin-top: 20px;
+    padding: 15px;
+    background: #e6e6ff;
+    border-radius: 10px;
+}
+
+/* MÉTODOS DE PAGO */
+.metodos-pago {
+    background: #f0f0ff;
+    padding: 25px;
+    border-radius: 12px;
+}
+
+.metodos-pago h3 {
+    color: #6a0dad;
+    margin-bottom: 20px;
+}
+
+.metodo-pago {
+    background: white;
+    padding: 18px 20px;
+    margin: 12px 0;
+    border-radius: 10px;
+    border: 2px solid #dcdcff;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column; /* organiza input, strong y small verticalmente */
+}
+
+.metodo-pago input[type="radio"] {
+    margin-bottom: 8px; /* separa del texto */
+    display: inline-block;
+}
+
+.metodo-pago strong {
+    color: #5a5f9f;
+    font-size: 1.1em;
+    margin-bottom: 3px;
+}
+
+.metodo-pago small {
+    color: #8888aa;
+    font-size: 0.9em;
+    display: block;
+}
+
+.metodo-pago {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.metodo-pago input[type="radio"] {
+    margin-right: 12px;
+    margin-bottom: 0;
+}
+
+
+
+/* BOTÓN DE PAGO */
+.btn-pagar {
+    background: linear-gradient(135deg, #6a0dad, #5a5f9f);
+    color: white;
+    padding: 18px 30px;
+    border: none;
+    border-radius: 12px;
+    font-size: 1.2em;
+    font-weight: bold;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 25px;
+    transition: all 0.3s ease;
+}
+
+.btn-pagar:hover {
+    background: linear-gradient(135deg, #5a5f9f, #4a4f8f);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(106, 13, 173, 0.4);
+}
+
+/* INFO DE SEGURIDAD */
+.info-seguridad {
+    text-align: center;
+    margin-top: 15px;
+    color: #8888aa;
+    font-size: 0.9em;
+}

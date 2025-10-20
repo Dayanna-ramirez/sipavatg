@@ -30,7 +30,7 @@
         <td>{{ p.imagen }}</td>
         <td>
           <button class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#modalEditar{{ p.id_producto }}">Editar</button>
-          <button class="btn btn-outline-danger" onclick="if(confirm('¿Estás seguro de eliminar este producto?')){ window.location.href='{{ url_for(eliminar_producto, id=p.id_producto) }}' }">Eliminar</button>
+          <button class="btn btn-outline-danger" onclick="if(confirm('¿Estás seguro de eliminar este producto?')){ window.location.href='{{url_for('eliminar_producto', id=p.id_producto) }}' }">Eliminar</button>
         </td>
       </tr>
 
@@ -123,7 +123,5 @@
       </form>
     </div>
   </div>
-<!-- Al final del body, antes de cerrar </body> -->
-{% include 'footer_boutique.html' %}
 </div>
 {% endblock %}

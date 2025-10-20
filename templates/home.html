@@ -31,8 +31,8 @@
             justify-content: space-between;
             align-items: center;
         ">
-            <strong style="color: #dc3545;">{{ producto[0] }}</strong>
-            <span style="color: #6c757d;">Solo quedan {{ producto[1] }} unidades</span>
+            <strong style="color: #dc3545;">{{ producto.nombre_producto }}</strong>
+            <span style="color: #6c757d;">Solo quedan {{ producto.cantidad }} unidades</span>
         </div>
         {% endfor %}
         
@@ -42,7 +42,10 @@
     </div>
     {% endif %}
 
+    {% if session.rol == 'Admin' %}
     <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalAgregar">Agregar usuario</button>
+    {% endif %}
+
     <!-- The Modal Agregar usuario-->
     <!-- Modal Agregar Usuario -->
     <div class="modal fade" id="modalAgregar" tabindex="-1">
@@ -75,7 +78,11 @@
                                 <label for="correo_electronico" class="form-label">Correo electrónico</label>
                                 <input type="email" class="form-control" name="correo_electronico" id="correo_electronico" required>
                             </div>
-                            <div class="col-md-12">
+                            <div class="col-md-6">
+                                <label for="password" class="form-label">Contraseña</label>
+                                <input type="password" class="form-control" name="password" id="password" required>
+                            </div>
+                            <div class="col-md-6">
                                 <label for="rol_usuario" class="form-label">Rol del usuario</label>
                                 <select name="rol_usuario" class="form-control" id="rol_usuario" required>
                                     <option value="" disabled selected>Seleccione un rol</option>
@@ -108,69 +115,68 @@
                 <th>Teléfono</th>
                 <th>Correo</th>
                 <th>Rol</th>
+                {% if session.rol == 'Admin' %}
                 <th>Acciones</th>
+                {% endif %}
             </tr>
         </thead>
         <tbody>
             {% for u in usuarios %}
             <tr>
-                <td>{{ u['id_usuario'] }}</td>
-                <td>{{ u['nombre'] }}</td>
-                <td>{{ u['apellido'] }}</td>
-                <td>{{ u['telefono'] }}</td>
-                <td>{{ u['correo_electronico'] }}</td>
-                <td>{{ u['nombre_rol'] }}</td>
+                <td>{{ u.id_usuario }}</td>
+                <td>{{ u.nombre }}</td>
+                <td>{{ u.apellido }}</td>
+                <td>{{ u.telefono }}</td>
+                <td>{{ u.correo_electronico }}</td>
+                <td>{{ u.nombre_rol }}</td>
+                {% if session.rol == 'Admin' %}
                 <td>
                     <button class="btn btn-warning btn-sm" data-bs-toggle="modal"
-                        data-bs-target="#ModalEdit{{ u['id_usuario'] }}">Editar</button>
+                        data-bs-target="#ModalEdit{{ u.id_usuario }}">Editar</button>
 
                     <!-- Modal Edit -->
-                    <div class="modal fade" id="ModalEdit{{ u['id_usuario'] }}" tabindex="-1"
-                        aria-labelledby="EditModalLabel{{ u['id_usuario'] }}" aria-hidden="true">
+                    <div class="modal fade" id="ModalEdit{{ u.id_usuario }}" tabindex="-1"
+                        aria-labelledby="EditModalLabel{{ u.id_usuario }}" aria-hidden="true">
                         <div class="modal-dialog">
-                            <form action="{{url_for('actualizar', id=u['id_usuario'])}}" method="POST">
+                            <form action="{{ url_for('actualizar_usuario', id=u.id_usuario) }}" method="POST">
                                 <div class="modal-content">
                                     <div class="modal-header">
-                                        <h4 class="modal-title" id="EditModalLabel{{ u['id_usuario'] }}">Editar Usuario:
-                                            {{ u['nombre'] }}
-                                            {{ u['apellido'] }}</h4>
+                                        <h4 class="modal-title" id="EditModalLabel{{ u.id_usuario }}">Editar Usuario:
+                                            {{ u.nombre }} {{ u.apellido }}</h4>
                                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                     </div>
                                     <div class="modal-body">
-                                        <div class="form-group">
-                                            <label for="nombre {{ u['id_usuario']}}">Nombre</label>
+                                        <div class="form-group mb-3">
+                                            <label for="nombre{{ u.id_usuario }}">Nombre</label>
                                             <input type="text" class="form-control" name="nombre"
-                                                id="nombre{{ u['id_usuario']}}" value="{{ u['nombre']}}" required>
+                                                id="nombre{{ u.id_usuario }}" value="{{ u.nombre }}" required>
                                         </div>
 
-                                        <div class="form-group">
-                                            <label for="apellido {{ u['id_usuario']}}">Apellido</label>
+                                        <div class="form-group mb-3">
+                                            <label for="apellido{{ u.id_usuario }}">Apellido</label>
                                             <input type="text" class="form-control" name="apellido"
-                                                id="apellido{{ u['id_usuario']}}" value="{{ u['apellido']}}" required>
+                                                id="apellido{{ u.id_usuario }}" value="{{ u.apellido }}" required>
                                         </div>
 
-                                        <div class="form-group">
-                                            <label for="telefono {{ u['id_usuario']}}">Telefono</label>
+                                        <div class="form-group mb-3">
+                                            <label for="telefono{{ u.id_usuario }}">Teléfono</label>
                                             <input type="text" class="form-control" name="telefono"
-                                                id="telefono{{ u['id_usuario']}}" value="{{ u['telefono']}}" required>
+                                                id="telefono{{ u.id_usuario }}" value="{{ u.telefono }}" required>
                                         </div>
 
-                                        <div class="form-group">
-                                            <label for="correo_electronico {{ u['id_usuario']}}">Correo
-                                                electronico</label>
+                                        <div class="form-group mb-3">
+                                            <label for="correo_electronico{{ u.id_usuario }}">Correo electrónico</label>
                                             <input type="email" class="form-control" name="correo_electronico"
-                                                id="correo_electronico{{ u['id_usuario']}}"
-                                                value="{{ u['correo_electronico']}}" required>
+                                                id="correo_electronico{{ u.id_usuario }}"
+                                                value="{{ u.correo_electronico }}" required>
                                         </div>
 
-                                        <div class="form-group">
-                                            <label for="rol_usuario{{ u['id_usuario'] }}">Rol del usuario</label>
+                                        <div class="form-group mb-3">
+                                            <label for="rol_usuario{{ u.id_usuario }}">Rol del usuario</label>
                                             <select name="rol_usuario" class="form-control"
-                                                id="rol_usuario{{ u['id_usuario'] }}">
-                                                <option value="1" {% if u['id_rol']==1 %}selected{% endif %}>Admin
-                                                </option>
-                                                <option value="2" {% if u['id_rol']==2 %}selected{% endif %}>Usuario
-                                                </option>
+                                                id="rol_usuario{{ u.id_usuario }}" required>
+                                                <option value="1" {% if u.id_rol==1 %}selected{% endif %}>Admin</option>
+                                                <option value="2" {% if u.id_rol==2 %}selected{% endif %}>Usuario</option>
                                             </select>
                                         </div>
 
@@ -187,48 +193,51 @@
                     </div>
 
                     <button class="btn btn-danger btn-sm" data-bs-toggle="modal"
-                        data-bs-target="#ModalEliminar{{u['id_usuario']}}">Eliminar</button>
+                        data-bs-target="#ModalEliminar{{ u.id_usuario }}">Eliminar</button>
 
                     <!-- The Modal -->
-                    <div class="modal" id="ModalEliminar{{u['id_usuario']}}" tabindex="-1" role="dialog"
-                        aria-labelledby="modalLabel{{u['id_usuario']}}" aria-hidden="true">
+                    <div class="modal" id="ModalEliminar{{ u.id_usuario }}" tabindex="-1" role="dialog"
+                        aria-labelledby="modalLabel{{ u.id_usuario }}" aria-hidden="true">
                         <div class="modal-dialog">
                             <div class="modal-content">
 
                                 <!-- Modal Header -->
                                 <div class="modal-header">
-                                    <h4 class="modal-title" id="modallabel{{u['id_usuario']}}">Confirmar eliminacion
-                                    </h4>
+                                    <h4 class="modal-title" id="modallabel{{ u.id_usuario }}">Confirmar eliminación</h4>
                                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                 </div>
 
                                 <!-- Modal body -->
                                 <div class="modal-body">
-                                    ¿Esta seguro de que deseas eliminar al usuario <strong> {{u['nombre']}}
-                                        {{u['apellido']}}</strong>?
+                                    ¿Está seguro de que deseas eliminar al usuario <strong>{{ u.nombre }} {{ u.apellido }}</strong>?
+                                    {% if u.id_usuario == session.idUsuario %}
+                                    <div class="alert alert-warning mt-2">
+                                        <small>⚠️ No puedes eliminar tu propio usuario</small>
+                                    </div>
+                                    {% endif %}
                                 </div>
 
                                 <!-- Modal footer -->
                                 <div class="modal-footer">
-                                    <button type="button" class="btn btn-secundary"
+                                    <button type="button" class="btn btn-secondary"
                                         data-bs-dismiss="modal">Cancelar</button>
-                                    <a href="{{url_for('eliminar', id= u['id_usuario'])}}"
+                                    {% if u.id_usuario != session.idUsuario %}
+                                    <a href="{{ url_for('eliminar_usuario', id=u.id_usuario) }}"
                                         class="btn btn-danger">Eliminar</a>
+                                    {% else %}
+                                    <button type="button" class="btn btn-danger" disabled>Eliminar</button>
+                                    {% endif %}
                                 </div>
 
                             </div>
                         </div>
                     </div>
                 </td>
+                {% endif %}
             </tr>
             {% endfor %}
         </tbody>
     </table>
-<<<<<<< HEAD
-=======
-    
-    <!-- Footer -->
-    {% include 'footer_boutique.html' %}
->>>>>>> 09b9c4b4e43b9cf518777693808365ef5224d982
+
 </div>
 {% endblock %}

@@ -135,7 +135,7 @@
             <div style="margin-bottom: 15px;">
                 <p style="font-size: 1.1em; margin: 5px 0;">Subtotal: ${{ "%.2f"|format(total_original) }}</p>
                 <p style="color: #28a745; font-size: 1.1em; font-weight: bold; margin: 5px 0;">
-                    Descuento ({{ session.descuento_aplicado }}%): -${{ "%.2f"|format(total_original * session.descuento_aplicado / 100) }}
+                    Descuento ({{ session.descuento_aplicado }}%): -${{ "%.2f"|format(total_original * Decimal(session.descuento_aplicado) / 100) }}
                 </p>
             </div>
             <h3 style="color: #d4af37; font-size: 1.8em; margin: 10px 0;">
@@ -171,8 +171,6 @@
         <p>Tu carrito está vacío 🛍️</p>
     {% endif %}
     
-    <!-- Footer -->
-    {% include 'footer_boutique.html' %}
 </div>
 
 {% endblock %}

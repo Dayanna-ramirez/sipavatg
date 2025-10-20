@@ -1,71 +1,499 @@
-    <link rel="stylesheet" href="{{ url_for('static', filename='home.css') }}">
-    <!-- Header con menú -->
-    <header>
-        <div class="logo">
-            <img src="{{ url_for('static', filename='img/logo.jpg') }}" alt="Logo">
-        </div>
-        <nav>
-            <ul class="nav-links">
-                <li><a href="#">Inicio</a></li>
-                <li><a href="#">Sobre Nosotros</a></li>
-                <li><a href="#">Productos</a></li>
-                <li><a href="#">Contacto</a></li>
-            </ul>
-        </nav>
-    </header>
-
-    <!-- Barra de búsqueda -->
-    <div class="buscador">
-        <input type="text" placeholder="Buscar...">
-        <button>Buscar</button>
-
-        <!-- Íconos a la derecha -->
-        <div class="acciones-laterales">
-            <a href="{{url_for('carrito')}}"><img src="{{ url_for('static', filename='img/carrito.jpg') }}" alt="Carrito"></a>
-            <a href="#"><img src="{{ url_for('static', filename='img/login.jpg') }}" alt="Perfil"></a>
-        </div>
-    </div>
-
-    <!-- Menú de tarjetas -->
-    <div class="menu">
-        <a href="{{url_for('dashboard')}}">
-            <div class="item">
-                <div class="item-text">Dashboard</div>
-                <div class="item-icon">
-                    <img src="{{ url_for('static', filename='img/prendas.jpg') }}" alt="prendas">
-                </div>
+<link rel="stylesheet" href="{{ url_for('static', filename='home.css') }}">
+    
+<!-- Header principal -->
+<header class="header-main">
+    <div class="header-container">
+        <!-- Logo y marca -->
+        <div class="brand-section">
+            <div class="logo">
+                <img src="{{ url_for('static', filename='img/logo.jpg') }}" alt="Logo SIPAVATG">
             </div>
-        </a>
-        <a href="{{url_for('inventario')}}">
-            <div class="item">
-                <div class="item-text">Inventario</div>
-                <div class="item-icon">
-                    <img src="{{ url_for('static', filename='img/inventario.jpg') }}" alt="inventario">
-                </div>
-            </div>
-        </a>
-      
-
-        <a href="{{url_for('catalogo')}}">
-            <div class="item">
-                <div class="item-text">Catálogo</div>
-                <div class="item-icon">
-                    <img src="{{ url_for('static', filename='img/Catalogo.jpg') }}" alt="catalogo">
-                </div>
-            </div>
-        </a>
-
-        <div class="item">
-            <div class="item-text">Pago online</div>
-            <div class="item-icon">
-                <img src="{{ url_for('static', filename='img/pago.jpg') }}" alt="pago">
+            <div class="brand-name">
+                <h1>SIPAVATG</h1>
+                <p>Sistema Integral de Pavas</p>
             </div>
         </div>
 
-        <div class="item">
-            <div class="item-text">Alquiler</div>
-            <div class="item-icon">
-                <img src="{{ url_for('static', filename='img/alquiler.jpg') }}" alt="alquiler">
+        <!-- Acciones del usuario -->
+        <div class="user-actions">
+            <!-- Barra de búsqueda -->
+            <div class="search-bar">
+                <input type="text" placeholder="Buscar productos..." class="search-input">
+                <button class="search-btn">
+                    <i class="bi bi-search"></i>
+                </button>
+            </div>
+
+            <!-- Carrito -->
+            <a href="{{ url_for('carrito') }}" class="cart-icon" title="Carrito de compras">
+                <i class="bi bi-cart3"></i>
+                {% if carrito_cantidad > 0 %}
+                <span class="cart-badge">{{ carrito_cantidad }}</span>
+                {% endif %}
+            </a>
+
+            <!-- Perfil del usuario -->
+            <div class="profile-menu">
+                <div class="user-info" onclick="toggleMenu()">
+                    <img src="{{ url_for('static', filename='img/login.jpg') }}" alt="Perfil" class="user-avatar">
+                    <span class="user-name">Hola, {{ session.user_name }}</span>
+                    <i class="bi bi-chevron-down"></i>
+                </div>
+                <div class="dropdown-menu" id="menuDesplegable">
+                    <div class="dropdown-header">
+                        <strong>{{ session.user_name }}</strong>
+                        <small>{{ session.rol }}</small>
+                    </div>
+
+                    <a href="{{ url_for('logout') }}" class="dropdown-item logout">
+                        <i class="bi bi-box-arrow-right"></i> Cerrar sesión
+                    </a>
+                </div>
             </div>
         </div>
     </div>
+</header>
+
+<!-- Menú de tarjetas de acceso rápido -->
+<section class="quick-access">
+    <div class="container">
+        <h2 class="section-title">Acceso Rápido</h2>
+        <div class="cards-grid">
+            <a href="{{ url_for('dashboard') }}" class="card-link">
+                <div class="feature-card">
+                    <div class="card-icon">
+                        <i class="bi bi-speedometer2"></i>
+                    </div>
+                    <div class="card-content">
+                        <h3>Dashboard</h3>
+                        <p>Panel de control principal</p>
+                    </div>
+                    <div class="card-badge">Principal</div>
+                </div>
+            </a>
+
+            {% if session.rol == 'Admin' %}
+            <a href="{{ url_for('inventario') }}" class="card-link">
+                <div class="feature-card">
+                    <div class="card-icon">
+                        <i class="bi bi-box-seam"></i>
+                    </div>
+                    <div class="card-content">
+                        <h3>Inventario</h3>
+                        <p>Gestión de productos</p>
+                    </div>
+                    <div class="card-badge admin">Admin</div>
+                </div>
+            </a>
+            {% endif %}
+
+            <a href="{{ url_for('catalogo') }}" class="card-link">
+                <div class="feature-card">
+                    <div class="card-icon">
+                        <i class="bi bi-grid"></i>
+                    </div>
+                    <div class="card-content">
+                        <h3>Catálogo</h3>
+                        <p>Ver todos los productos</p>
+                    </div>
+                </div>
+            </a>
+<!---->
+            <div class="feature-card coming-soon">
+                <div class="card-icon">
+                    <i class="bi bi-credit-card"></i>
+                </div>
+                <div class="card-content">
+                    <h3>Pago Online</h3>
+                    <p>Próximamente</p>
+                </div>
+                <div class="card-badge soon">Próximo</div>
+            </div>
+
+            <div class="feature-card coming-soon">
+                <div class="card-icon">
+                    <i class="bi bi-calendar-check"></i>
+                </div>
+                <div class="card-content">
+                    <h3>Alquiler</h3>
+                    <p>Próximamente</p>
+                </div>
+                <div class="card-badge soon">Próximo</div>
+            </div>
+        -->
+            {% if session.rol == 'Admin' %}
+
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<style>
+/* Estilos mejorados para el header */
+.header-main {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 1rem 0;
+    box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+}
+
+.header-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 2rem;
+}
+
+.brand-section {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.logo img {
+    height: 50px;
+    width: 50px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid white;
+}
+
+.brand-name h1 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+
+.brand-name p {
+    margin: 0;
+    font-size: 0.8rem;
+    opacity: 0.9;
+}
+
+.main-nav .nav-links {
+    display: flex;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    gap: 2rem;
+}
+
+.nav-link {
+    color: white;
+    text-decoration: none;
+    padding: 0.5rem 1rem;
+    border-radius: 25px;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.nav-link:hover,
+.nav-link.active {
+    background: rgba(255,255,255,0.2);
+    transform: translateY(-2px);
+}
+
+.user-actions {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.search-bar {
+    display: flex;
+    background: white;
+    border-radius: 25px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.search-input {
+    border: none;
+    padding: 0.5rem 1rem;
+    outline: none;
+    width: 250px;
+}
+
+.search-btn {
+    background: #667eea;
+    border: none;
+    color: white;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.search-btn:hover {
+    background: #764ba2;
+}
+
+.cart-icon {
+    position: relative;
+    color: white;
+    font-size: 1.5rem;
+    text-decoration: none;
+    padding: 0.5rem;
+    border-radius: 50%;
+    transition: background 0.3s ease;
+}
+
+.cart-icon:hover {
+    background: rgba(255,255,255,0.2);
+}
+
+.cart-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: #ff4757;
+    color: white;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    font-size: 0.7rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.profile-menu {
+    position: relative;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.user-info:hover {
+    background: rgba(255,255,255,0.2);
+}
+
+.user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid white;
+}
+
+.user-name {
+    font-weight: 500;
+}
+
+.dropdown-menu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: white;
+    color: #333;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    min-width: 250px;
+    z-index: 1000;
+    margin-top: 0.5rem;
+}
+
+.dropdown-menu.show {
+    display: block;
+}
+
+.dropdown-header {
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 10px 10px 0 0;
+}
+
+.dropdown-header strong {
+    display: block;
+    color: #333;
+}
+
+.dropdown-header small {
+    color: #666;
+    font-size: 0.8rem;
+}
+
+.dropdown-divider {
+    height: 1px;
+    background: #e9ecef;
+    margin: 0.5rem 0;
+}
+
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    color: #333;
+    text-decoration: none;
+    transition: background 0.3s ease;
+}
+
+.dropdown-item:hover {
+    background: #f8f9fa;
+}
+
+.dropdown-item.logout {
+    color: #dc3545;
+}
+
+.dropdown-item.logout:hover {
+    background: #ffe6e6;
+}
+
+/* Estilos para las tarjetas de acceso rápido */
+.quick-access {
+    padding: 3rem 0;
+    background: #f8f9fa;
+}
+
+.section-title {
+    text-align: center;
+    margin-bottom: 2rem;
+    color: #333;
+    font-size: 2rem;
+}
+
+.cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 2rem;
+}
+
+.card-link {
+    text-decoration: none;
+    color: inherit;
+}
+
+.feature-card {
+    background: white;
+    border-radius: 15px;
+    padding: 2rem;
+    text-align: center;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    position: relative;
+    border: 2px solid transparent;
+}
+
+.feature-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+    border-color: #667eea;
+}
+
+.feature-card.coming-soon {
+    opacity: 0.7;
+    filter: grayscale(0.3);
+}
+
+.card-icon {
+    font-size: 3rem;
+    color: #667eea;
+    margin-bottom: 1rem;
+}
+
+.card-content h3 {
+    margin: 0 0 0.5rem 0;
+    color: #333;
+    font-size: 1.25rem;
+}
+
+.card-content p {
+    margin: 0;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.card-badge {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: #667eea;
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 15px;
+    font-size: 0.7rem;
+    font-weight: bold;
+}
+
+.card-badge.admin {
+    background: #dc3545;
+}
+
+.card-badge.soon {
+    background: #ffc107;
+    color: #333;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .header-container {
+        flex-direction: column;
+        gap: 1rem;
+        padding: 1rem;
+    }
+
+    .main-nav .nav-links {
+        gap: 1rem;
+    }
+
+    .user-actions {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .search-input {
+        width: 200px;
+    }
+
+    .cards-grid {
+        grid-template-columns: 1fr;
+        padding: 0 1rem;
+    }
+}
+</style>
+
+<script>
+function toggleMenu() {
+    const menu = document.getElementById("menuDesplegable");
+    menu.classList.toggle("show");
+}
+
+// Cierra el menú si se hace clic fuera
+window.onclick = function(event) {
+    const menu = document.getElementById("menuDesplegable");
+    const userInfo = document.querySelector('.user-info');
+    
+    if (!userInfo.contains(event.target)) {
+        menu.classList.remove("show");
+    }
+}
+
+// Efectos hover para tarjetas
+document.addEventListener('DOMContentLoaded', function() {
+    const cards = document.querySelectorAll('.feature-card');
+    
+    cards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-10px)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+    });
+});
+</script>   
