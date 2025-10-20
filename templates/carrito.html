@@ -4,7 +4,7 @@
 
 <body>
 
-<h1> carrito de compras</h1>
+<h1>Carrito de Compras</h1>
 
 <div class="carrito-view">
     {% if productos %}
@@ -41,17 +41,138 @@
         </tbody>
     </table>
 
-    <div class="tabla-box">
-            Total: ${{ total }}
-            <a href="{{ url_for('vaciar_carrito') }}" class="btn btn-warning">Vaciar Carrito</a>
-            <a href="{{ url_for('pago') }}" class="btn btn-warning">Pagar</a>
+    <!-- ============================================= -->
+    <!-- SECCIÓN DE CUPONES - AGREGAR ANTES DEL TOTAL -->
+    <!-- ============================================= -->
+
+    <div style="
+        background: linear-gradient(135deg, #f0f8ff, #e6f3ff);
+        padding: 20px;
+        border-radius: 10px;
+        margin: 20px 0;
+        border: 2px solid #d1ecf1;
+    ">
+        <h4 style="color: #17a2b8; margin-bottom: 15px; display: flex; align-items: center;">
+             ¿Tienes un cupón de descuento?
+        </h4>
+        
+        {% if session.get('descuento_aplicado') %}
+        <div style="
+            background: #d4edda;
+            padding: 15px;
+            border-radius: 8px;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        ">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <strong>¡Cupón aplicado! 🎉</strong> 
+                    <br>
+                    <span>{{ session.descuento_aplicado }}% de descuento con código: <strong>{{ session.cupon_usado }}</strong></span>
+                </div>
+                <a href="{{ url_for('remover_cupon') }}" 
+                   style="
+                        background: #dc3545;
+                        color: white;
+                        padding: 8px 15px;
+                        border-radius: 5px;
+                        text-decoration: none;
+                        font-size: 0.9em;
+                   ">
+                    Remover
+                </a>
+            </div>
         </div>
         {% else %}
-            <p>Tu carrito está vacío 🛍️</p>
+        <form method="POST" action="{{ url_for('aplicar_cupon') }}" style="display: flex; gap: 10px; margin-bottom: 10px;">
+            <input type="text" 
+                   name="codigo_cupon" 
+                   placeholder="Ingresa tu código aquí... Ej: BIENVENIDA10" 
+                   style="
+                        padding: 12px;
+                        border: 2px solid #17a2b8;
+                        border-radius: 8px;
+                        flex: 1;
+                        font-size: 1em;
+                   "
+                   required>
+            <button type="submit" 
+                    style="
+                        background: #28a745;
+                        color: white;
+                        border: none;
+                        padding: 12px 20px;
+                        border-radius: 8px;
+                        cursor: pointer;
+                        font-weight: bold;
+                        transition: background 0.3s ease;
+                    "
+                    onmouseover="this.style.background='#218838'"
+                    onmouseout="this.style.background='#28a745'">
+                Aplicar Cupón
+            </button>
+        </form>
+        <div style="color: #6c757d; font-size: 0.9em;">
+             Cupones disponibles: <strong>BIENVENIDA10</strong> (10% off), 
+            <strong>VERANO20</strong> (20% off), <strong>PRIMERACOMPRA15</strong> (15% off)
+        </div>
         {% endif %}
-        <!-- Al final del body, antes de cerrar </body> -->
-{% include 'footer_boutique.html' %}
     </div>
 
-{% endblock %}
+    <!-- ============================================= -->
+    <!-- SECCIÓN DEL TOTAL - MODIFICADA -->
+    <!-- ============================================= -->
 
+    <div style="
+        background: #2c3e50;
+        color: white;
+        padding: 25px;
+        border-radius: 10px;
+        margin-top: 20px;
+    ">
+        {% if session.get('descuento_aplicado') %}
+        <div style="text-align: center;">
+            <div style="margin-bottom: 15px;">
+                <p style="font-size: 1.1em; margin: 5px 0;">Subtotal: ${{ "%.2f"|format(total_original) }}</p>
+                <p style="color: #28a745; font-size: 1.1em; font-weight: bold; margin: 5px 0;">
+                    Descuento ({{ session.descuento_aplicado }}%): -${{ "%.2f"|format(total_original * session.descuento_aplicado / 100) }}
+                </p>
+            </div>
+            <h3 style="color: #d4af37; font-size: 1.8em; margin: 10px 0;">
+                Total con descuento: ${{ "%.2f"|format(total) }}
+            </h3>
+        </div>
+        {% else %}
+        <h3 style="text-align: center; color: #d4af37; font-size: 1.8em;">
+            Total: ${{ "%.2f"|format(total) }}
+        </h3>
+        {% endif %}
+        
+        <div style="text-align: center; margin-top: 15px;">
+            <a href="{{ url_for('vaciar_carrito') }}" class="btn btn-warning" style="margin-right: 10px;">Vaciar Carrito</a>
+            <a href="{{ url_for('pago') }}" 
+               style="
+                    background: #d4af37;
+                    color: white;
+                    padding: 15px 30px;
+                    border-radius: 8px;
+                    text-decoration: none;
+                    font-weight: bold;
+                    display: inline-block;
+                    transition: background 0.3s ease;
+               "
+               onmouseover="this.style.background='#b8941f'"
+               onmouseout="this.style.background='#d4af37'">
+                 Proceder al Pago
+            </a>
+        </div>
+    </div>
+    {% else %}
+        <p>Tu carrito está vacío 🛍️</p>
+    {% endif %}
+    
+    <!-- Footer -->
+    {% include 'footer_boutique.html' %}
+</div>
+
+{% endblock %}

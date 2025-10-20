@@ -5,8 +5,72 @@ from werkzeug.utils import secure_filename
 import random
 import os
 from functools import wraps  # Para el decorador login_required
+<<<<<<< HEAD
 from flask_mail import Mail, Message
 from itsdangerous import URLSafeTimedSerializer
+=======
+
+import secrets
+from datetime import datetime, timedelta
+import smtplib
+from email.mime.text import MIMEText    
+
+#Funcion para generar token de recuperacion
+def generar_token(email):
+    token =secrets.token_urlsafe(32)
+    expiry =datetime.now() + timedelta(hours=1)
+    conn = pymysql.connect(**db_config)
+    cursor = conn.cursor()
+    cursor.execute("UPDATE usuario SET reset_token= %s, token_expiry= %s WHERE correo_electronico = %s", (token, expiry,email))
+    conn.commit()
+    cursor.close()
+    conn.close()
+    return token 
+
+#Funcion para enviar el correo con enlace de recuperacion 
+def enviar_correo_reset(email,token):
+    enlace = url_for('reset', token = token, _external=True)
+    cuerpo = f"""Hola, Solicitaste recuperar tu contraseña. Haz click en el siguiente enlace:
+    {enlace}
+    Este enlace expirara en 1 hora.
+    Si no lo solicitaste, ignora este mensaje. """
+
+    remitente = 'secureloginnoresponder@gmail.com'
+    clave = 'cjhc bwnp tuwu myls'
+    mensaje = MIMEText(cuerpo)
+    mensaje['Subject'] = 'Recuperar contraseña'
+    mensaje['From']= 'secureloginnoresponder@gmail.com'
+    mensaje ['To']= email
+
+    server = smtplib.SMTP('smtp.gmail.com',587)
+    server.starttls()
+    server.login(remitente,clave)
+    server.sendmail(remitente,email,mensaje.as_string())
+    server.quit()
+>>>>>>> 09b9c4b4e43b9cf518777693808365ef5224d982
+
+# =============================================
+# FUNCIONES NUEVAS PARA ALERTAS Y CUPONES
+# =============================================
+def check_stock_bajo():
+    """Verifica productos con stock bajo"""
+    try:
+        conn = pymysql.connect(**db_config)
+        cur = conn.cursor()
+        cur.execute("SELECT nombre_producto, cantidad FROM producto WHERE cantidad <= 5")
+        productos_bajos = cur.fetchall()
+        return productos_bajos
+    except Exception as e:
+        print(f"Error checking stock: {e}")
+        return []
+    finally:
+        cur.close()
+        conn.close()
+
+def aplicar_descuento_carrito(total_original):
+    """Aplica descuento si hay cupón en sesión"""
+    descuento = session.get('descuento_aplicado', 0)
+    return total_original * (1 - descuento / 100)
 
 app = Flask(__name__)
 app.secret_key = 'clave_super_secreta'
@@ -91,6 +155,11 @@ def dashboard():
         flash("Debes iniciar sesión para acceder al dashboard.", "warning")
         return redirect(url_for('login'))
 
+    # Obtener alertas de stock solo para admin
+    alertas_stock = []
+    if session.get('rol') == 'Admin':
+        alertas_stock = check_stock_bajo()
+
     conn = pymysql.connect(**db_config)
     try:
         with conn.cursor() as cursor:
@@ -103,7 +172,11 @@ def dashboard():
     finally:
         conn.close()
 
+<<<<<<< HEAD
     return render_template('home.html', usuarios=usuarios)
+=======
+    return render_template('home.html', usuarios=usuarios, alertas_stock=alertas_stock)
+>>>>>>> 09b9c4b4e43b9cf518777693808365ef5224d982
 
 # Ruta de Registro
 @app.route('/register', methods=['GET', 'POST'])
@@ -222,6 +295,80 @@ def forgot_password():
 
     return render_template('restored.html')
 
+<<<<<<< HEAD
+=======
+# Ruta para completar la recuperacion de la contraseña
+@app.route('/reset/<token>', methods =['GET','POST'])
+def reset (token):
+    conn = pymysql.connect(**db_config)
+    cursor = conn.cursor()
+    cursor.execute("SELECT id_usuario, token_expiry FROM usuario WHERE reset_token = %s", (token,))
+    usuario = cursor.fetchone()
+    conn.close()
+
+    if not usuario or datetime.now() >usuario [1]:
+        flash ("Token invalido o expirado.")
+        return redirect(url_for('forgot'))
+    
+    if request.method == 'POST':
+        nuevo_password = request.form ['password']
+        hash_nueva = generate_password_hash(nuevo_password)
+
+        conn = pymysql.connect.cursor()
+        conn.execute("UPDATE usuario SET password =%s, reset_token=NULL, token_expiry=NULL WHERE id_usuario=%s", (hash_nueva, usuario[0]))
+        pymysql.connect.commit()
+        conn.close()
+
+        flash ("Tu contraseña se ha actualizad0.")
+        return redirect(url_for('login'))
+    
+    return render_template('reset.html')
+
+# =============================================
+# RUTAS NUEVAS PARA CUPONES
+# =============================================
+
+@app.route('/aplicar_cupon', methods=['POST'])
+def aplicar_cupon():
+    if 'user_id' not in session:
+        flash("Debes iniciar sesión.", "warning")
+        return redirect(url_for('login'))
+    
+    codigo_cupon = request.form.get('codigo_cupon', '').strip().upper()
+    
+    if not codigo_cupon:
+        flash("Por favor ingresa un código de cupón.", "warning")
+        return redirect(url_for('carrito'))
+    
+    try:
+        conn = pymysql.connect(**db_config)
+        with conn.cursor() as cur:
+            cur.execute("SELECT descuento FROM cupones WHERE codigo = %s AND activo = TRUE", (codigo_cupon,))
+            cupon = cur.fetchone()
+            
+            if cupon:
+                session['descuento_aplicado'] = cupon[0]
+                session['cupon_usado'] = codigo_cupon
+                flash(f"🎉 ¡Cupón aplicado! Obtienes {cupon[0]}% de descuento", "success")
+            else:
+                flash("❌ Cupón no válido o expirado", "danger")
+                
+    except Exception as e:
+        flash("Error al aplicar el cupón", "danger")
+        print(f"Error applying coupon: {e}")
+    finally:
+        conn.close()
+    
+    return redirect(url_for('carrito'))
+
+@app.route('/remover_cupon')
+def remover_cupon():
+    session.pop('descuento_aplicado', None)
+    session.pop('cupon_usado', None)
+    flash("Cupón removido", "info")
+    return redirect(url_for('carrito'))
+
+>>>>>>> 09b9c4b4e43b9cf518777693808365ef5224d982
 # ----------------- CRUD RUTAS (Protegidas) ------------------
 
 @app.route("/add_clientes", methods=['POST'])
@@ -563,8 +710,18 @@ def carrito():
     finally:
         conn.close()
 
+<<<<<<< HEAD
     total = sum(p['precio'] * p['cantidad'] for p in productos_carrito) if productos_carrito else 0
     return render_template('carrito.html', productos=productos_carrito, total=total)
+=======
+    total_original = sum(p['precio'] * p['cantidad'] for p in productos_carrito)
+    total_con_descuento = aplicar_descuento_carrito(total_original)
+    
+    return render_template('carrito.html', 
+                         productos=productos_carrito, 
+                         total=total_con_descuento,
+                         total_original=total_original)
+>>>>>>> 09b9c4b4e43b9cf518777693808365ef5224d982
 
 @app.route('/actualizar_carrito/<int:id>', methods=['POST'])
 def actualizar_carrito(id):
@@ -652,23 +809,31 @@ def vaciar_carrito():
         conn.close()
     return redirect(url_for('carrito'))
 
+# Ruta de pago MODIFICADA
 @app.route('/pago', methods=['GET', 'POST'])
 def pago():
     if 'idUsuario' not in session:
-        flash("Debes iniciar sesión para ver tu carrito.", "warning")
+        flash("Debes iniciar sesión para pagar.", "warning")
         return redirect(url_for('login'))
 
-    idUsuario = session['idUsuario']
-
+    # Obtener productos del carrito
+    id_usuario = session['idUsuario']
     conn = pymysql.connect(**db_config)
+<<<<<<< HEAD
     try:
         with conn.cursor() as cur:
+=======
+    
+    try:
+        with conn.cursor(pymysql.cursors.DictCursor) as cur:
+>>>>>>> 09b9c4b4e43b9cf518777693808365ef5224d982
             cur.execute("""
                 SELECT p.id_producto, p.nombre_producto, p.precio, dc.cantidad, p.cantidad AS stock
                 FROM detalles_carrito dc
                 JOIN carrito c ON dc.idCarrito = c.idCarrito
                 JOIN producto p ON dc.idProducto = p.id_producto
                 WHERE c.idUsuario = %s
+<<<<<<< HEAD
             """, (idUsuario,))
             productos = cur.fetchall()
     finally:
@@ -725,6 +890,69 @@ def pago():
 def confirmar_pago():
     metodo = request.args.get('metodo')
     codigo = request.args.get('codigo')
+=======
+            """, (id_usuario,))
+            productos = cur.fetchall()
+
+        # Calcular total con descuento
+        total_original = sum(p['precio'] * p['cantidad'] for p in productos)
+        total_final = aplicar_descuento_carrito(total_original)
+
+        if request.method == 'POST':
+            metodo_pago = request.form.get('metodo_pago', 'tarjeta')
+            
+            # Verificar stock antes del pago
+            errores = []
+            for p in productos:
+                if p['cantidad'] > p['stock']:
+                    errores.append(f"{p['nombre_producto']} excede el stock disponible")
+
+            if errores:
+                flash("Error en el pago: " + ", ".join(errores), "danger")
+                return redirect(url_for('carrito'))
+            
+            # Simular pago exitoso
+            codigo_pago = f"PAGO-{random.randint(1000, 9999)}"
+            
+            # Actualizar stock y limpiar carrito
+            with conn.cursor() as cur:
+                for producto in productos:
+                    cur.execute("""
+                        UPDATE producto 
+                        SET cantidad = cantidad - %s 
+                        WHERE id_producto = %s
+                    """, (producto['cantidad'], producto['id_producto']))
+                
+                # Vaciar carrito
+                cur.execute("""
+                    DELETE dc FROM detalles_carrito dc 
+                    JOIN carrito c ON dc.idCarrito = c.idCarrito 
+                    WHERE c.idUsuario = %s
+                """, (id_usuario,))
+                
+                conn.commit()
+            
+            # Limpiar cupón después del pago
+            session.pop('descuento_aplicado', None)
+            session.pop('cupon_usado', None)
+            
+            flash(f" ¡Pago exitoso! Tu código de confirmación es: {codigo_pago}", "success")
+            return redirect(url_for('catalogo'))
+
+    except Exception as e:
+        flash(f"Error en el proceso de pago: {str(e)}", "danger")
+        return redirect(url_for('carrito'))
+    finally:
+        conn.close()
+
+    return render_template('pago.html', 
+                     productos=productos, 
+                     total=total_final)
+@app.route('/confirmar_pago')
+def confirmar_pago():
+    metodo = request.args.get('metodo')
+    codigo_transaccion = request.args.get('codigo_transaccion')
+>>>>>>> 09b9c4b4e43b9cf518777693808365ef5224d982
     total = request.args.get('total')
     return render_template('confirmar_pago.html', metodo=metodo, codigo=codigo, total=total)
 
@@ -737,6 +965,7 @@ def reset_password(token):
         flash('El enlace ha expirado o no es válido.', 'danger')
         return redirect(url_for('forgot_password'))
 
+<<<<<<< HEAD
     if request.method == 'POST':
         nueva_contrasena = request.form.get('password')
         hash_nueva = generate_password_hash(nueva_contrasena)
@@ -755,5 +984,7 @@ def reset_password(token):
 
     return render_template('reset_password.html')
 
+=======
+>>>>>>> 09b9c4b4e43b9cf518777693808365ef5224d982
 if __name__ == "__main__":
     app.run(port=5000, debug=True)

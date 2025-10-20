@@ -3,9 +3,9 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 15-10-2025 a las 00:23:05
+-- Tiempo de generación: 20-10-2025 a las 01:54:56
 -- Versión del servidor: 10.4.32-MariaDB
--- Versión de PHP: 8.0.30
+-- Versión de PHP: 8.2.12
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -64,6 +64,29 @@ CREATE TABLE `categorias` (
   `nombre` varchar(100) NOT NULL,
   `descripcion` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `cupones`
+--
+
+CREATE TABLE `cupones` (
+  `id` int(11) NOT NULL,
+  `codigo` varchar(20) NOT NULL,
+  `descuento` int(11) NOT NULL,
+  `activo` tinyint(1) DEFAULT 1,
+  `fecha_creacion` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `cupones`
+--
+
+INSERT INTO `cupones` (`id`, `codigo`, `descuento`, `activo`, `fecha_creacion`) VALUES
+(1, 'BIENVENIDA10', 10, 1, '2025-10-19 22:48:37'),
+(2, 'VERANO20', 20, 1, '2025-10-19 22:48:37'),
+(3, 'PRIMERACOMPRA15', 15, 1, '2025-10-19 22:48:37');
 
 -- --------------------------------------------------------
 
@@ -183,15 +206,16 @@ CREATE TABLE `producto` (
   `id_categoria` int(11) DEFAULT NULL,
   `idCategoria` int(11) DEFAULT NULL,
   `cantidad` int(11) NOT NULL,
-  `imagen` varchar(255) NOT NULL
+  `imagen` varchar(255) NOT NULL,
+  `stock_minimo` int(11) DEFAULT 5
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Volcado de datos para la tabla `producto`
 --
 
-INSERT INTO `producto` (`id_producto`, `nombre_producto`, `precio`, `fecha_elaboracion`, `id_catalogo`, `id_inventario`, `id_categoria`, `idCategoria`, `cantidad`, `imagen`) VALUES
-(1, 'vestido', 600000.00, NULL, NULL, NULL, NULL, NULL, 29, 'Comic_De_Riesgos.png');
+INSERT INTO `producto` (`id_producto`, `nombre_producto`, `precio`, `fecha_elaboracion`, `id_catalogo`, `id_inventario`, `id_categoria`, `idCategoria`, `cantidad`, `imagen`, `stock_minimo`) VALUES
+(1, 'vestido', 600000.00, NULL, NULL, NULL, NULL, NULL, 29, 'Comic_De_Riesgos.png', 5);
 
 -- --------------------------------------------------------
 
@@ -242,17 +266,19 @@ CREATE TABLE `usuario` (
   `edad` int(11) DEFAULT NULL,
   `fecha_registro` date DEFAULT NULL,
   `clave` varchar(255) DEFAULT NULL,
-  `id_rol` int(11) DEFAULT NULL
+  `id_rol` int(11) DEFAULT NULL,
+  `reset_token` varchar(225) DEFAULT NULL,
+  `token_expiry` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Volcado de datos para la tabla `usuario`
 --
 
-INSERT INTO `usuario` (`id_usuario`, `nombre`, `apellido`, `telefono`, `correo_electronico`, `edad`, `fecha_registro`, `clave`, `id_rol`) VALUES
-(3, 'julieth', 'sarmiento ', '32222444485', 'va7en2009@gmail.com', NULL, NULL, 'scrypt:32768:8:1$XUXcQg9qgYk9Vbmd$7e2199ae715cde7feba93f8adb5399ba92efdd718fff5c47ad9cde41106970fa0033b1c7fbd33c27d00d5aa8b4aa82ef04bbf2f76de35f1962788b43b30c1f39', 2),
-(5, 'julieth', 'sarmiento ', '32222444485', 'va7en2009@gmail.com2', NULL, NULL, 'scrypt:32768:8:1$dLcQMNcQHeK6FvaA$20029be059cc847cac44e1a31fb04662d636c4ef7a1d598cb1f2d0b6843b91ba8446d0d738cf323acc8cafbde3e312da6f0b89a8e60675262efd7fc1aa5a9642', 2),
-(6, 'julieth', 'sarmiento', '32222444485', 'va7en2009@gmail.com3', NULL, NULL, 'scrypt:32768:8:1$OJIBZfWTFYJANiG5$09c7fa6c5c50648442a024667670dbb7c347ae9d57e05dd5b3d218b1d69795b5c8fa18586ee8451c56a558861e9b3fb9f9f9b48c84a8698e22c546107748a2d5', 2);
+INSERT INTO `usuario` (`id_usuario`, `nombre`, `apellido`, `telefono`, `correo_electronico`, `edad`, `fecha_registro`, `clave`, `id_rol`, `reset_token`, `token_expiry`) VALUES
+(3, 'julieth', 'sarmiento ', '32222444485', 'va7en2009@gmail.com', NULL, NULL, 'scrypt:32768:8:1$XUXcQg9qgYk9Vbmd$7e2199ae715cde7feba93f8adb5399ba92efdd718fff5c47ad9cde41106970fa0033b1c7fbd33c27d00d5aa8b4aa82ef04bbf2f76de35f1962788b43b30c1f39', 2, NULL, NULL),
+(5, 'julieth', 'sarmiento ', '32222444485', 'va7en2009@gmail.com2', NULL, NULL, 'scrypt:32768:8:1$dLcQMNcQHeK6FvaA$20029be059cc847cac44e1a31fb04662d636c4ef7a1d598cb1f2d0b6843b91ba8446d0d738cf323acc8cafbde3e312da6f0b89a8e60675262efd7fc1aa5a9642', 2, NULL, NULL),
+(6, 'julieth', 'sarmiento', '32222444485', 'va7en2009@gmail.com3', NULL, NULL, 'scrypt:32768:8:1$OJIBZfWTFYJANiG5$09c7fa6c5c50648442a024667670dbb7c347ae9d57e05dd5b3d218b1d69795b5c8fa18586ee8451c56a558861e9b3fb9f9f9b48c84a8698e22c546107748a2d5', 2, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -290,6 +316,13 @@ ALTER TABLE `catalogo`
 --
 ALTER TABLE `categorias`
   ADD PRIMARY KEY (`idCategoria`);
+
+--
+-- Indices de la tabla `cupones`
+--
+ALTER TABLE `cupones`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `codigo` (`codigo`);
 
 --
 -- Indices de la tabla `detalles_carrito`
@@ -400,6 +433,12 @@ ALTER TABLE `catalogo`
 --
 ALTER TABLE `categorias`
   MODIFY `idCategoria` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de la tabla `cupones`
+--
+ALTER TABLE `cupones`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT de la tabla `detalles_carrito`

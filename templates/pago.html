@@ -1,60 +1,222 @@
-{% extends 'base.html' %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finalizar Compra - Mi Boutique</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-{% block title %}Resumen de compra{% endblock %}
+        body {
+            font-family: 'Arial', sans-serif;
+            background: #f8f9fa;
+            color: #333;
+        }
 
-{% block content %}
-<div class="carrito-view">
-    <h2 style="text-align: center; margin-top: 20px;">Resumen de compra</h2>
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+        }
 
-    {% if productos %}
-    <div style="max-width: 1100px; margin: 0 auto; padding: 0 20px;">
-        <table class="tabla_carrito">
-            <thead>
-                <tr>
-                    <th>Producto</th>
-                    <th>Cantidad</th>
-                    <th>Precio</th>
-                    <th>Subtotal</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for p in productos %}
-                <tr>
-                    <td>{{ p.nombre_producto }}</td>
-                    <td>{{ p.cantidad }}</td>
-                    <td>${{ "{:,.0f}".format(p.precio) }}</td>
-                    <td>${{ "{:,.0f}".format(p.precio * p.cantidad) }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
 
-    <div class="total-box" style="text-align: right; margin-top: 15px; padding: 0 20px;">
-        <strong>Total: ${{ "{:,.0f}".format(total) }}</strong>
-    </div>
+        .header h1 {
+            color: #d4af37;
+            font-size: 2em;
+        }
 
-    <div style="margin-top: 15px; text-align: right; padding: 0 20px;">
-        <form method="POST" class="mt-4" style="text-align: right;">
-            <div class="form-check" style="display: flex; justify-content: flex-end; align-items: center;" required>
-                <input class="form-check-input" type="radio" name="metodo_pago" value="Nequi">
-                <label class="form-check-label" style="margin-left: 8px;">Nequi</label>
+        .resumen-pedido {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .resumen-pedido h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #d4af37;
+            padding-bottom: 8px;
+        }
+
+        .producto-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 12px 0;
+            padding: 10px 0;
+            border-bottom: 1px solid #ecf0f1;
+        }
+
+        .total-final {
+            font-size: 1.4em;
+            font-weight: bold;
+            color: #2c3e50;
+            text-align: center;
+            margin: 20px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .metodos-pago {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .metodos-pago h3 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+
+        .metodo-pago {
+            background: white;
+            padding: 18px;
+            margin: 12px 0;
+            border-radius: 8px;
+            border: 2px solid #e0e0e0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .metodo-pago:hover {
+            border-color: #d4af37;
+            background: #fffdf6;
+        }
+
+        .metodo-seleccionado {
+            border-color: #d4af37;
+            background: #fffdf6;
+            box-shadow: 0 2px 8px rgba(212, 175, 55, 0.3);
+        }
+
+        .metodo-pago input[type="radio"] {
+            margin-right: 10px;
+        }
+
+        .metodo-pago strong {
+            color: #2c3e50;
+            font-size: 1.1em;
+        }
+
+        .metodo-pago small {
+            color: #7f8c8d;
+            display: block;
+            margin-top: 5px;
+        }
+
+        .btn-pagar {
+            background: linear-gradient(135deg, #d4af37, #b8941f);
+            color: white;
+            padding: 18px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.2em;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 25px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-pagar:hover {
+            background: linear-gradient(135deg, #b8941f, #a0821a);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(212, 175, 55, 0.4);
+        }
+
+        .info-seguridad {
+            text-align: center;
+            margin-top: 15px;
+            color: #7f8c8d;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>💳 Finalizar Compra</h1>
+            <p>Estás a un paso de completar tu pedido</p>
+        </div>
+        
+        <!-- Resumen del Pedido -->
+        <div class="resumen-pedido">
+            <h3> Tu Pedido</h3>
+            {% for producto in productos %}
+            <div class="producto-item">
+                <span>{{ producto.nombre_producto }} x{{ producto.cantidad }}</span>
+                <span>${{ "%.2f"|format(producto.precio * producto.cantidad) }}</span>
             </div>
-            <div class="form-check" style="display: flex; justify-content: flex-end; align-items: center;">
-                <input class="form-check-input" type="radio" name="metodo_pago" value="Daviplata">
-                <label class="form-check-label" style="margin-left: 8px;">Daviplata</label>
+            {% endfor %}
+            
+            <div class="total-final">
+                Total a Pagar: ${{ "%.2f"|format(total) }}
             </div>
-            <div class="form-check" style="display: flex; justify-content: flex-end; align-items: center;">
-                <input class="form-check-input" type="radio" name="metodo_pago" value="Tarjeta">
-                <label class="form-check-label" style="margin-left: 8px;">Tarjeta</label>
+        </div>
+
+        <!-- Formulario de Pago -->
+        <form method="POST">
+            <div class="metodos-pago">
+                <h3> Elige tu método de pago:</h3>
+                
+                <label class="metodo-pago">
+                    <input type="radio" name="metodo_pago" value="tarjeta" checked 
+                           onchange="seleccionarMetodo(this)">
+                    <strong>Tarjeta de Crédito/Débito</strong><br>
+                    <small>Pago seguro con tu tarjeta - Transacción encriptada</small>
+                </label>
+
+                <label class="metodo-pago">
+                    <input type="radio" name="metodo_pago" value="paypal" 
+                           onchange="seleccionarMetodo(this)">
+                    <strong>PayPal</strong><br>
+                    <small>Pago rápido y seguro - Sin compartir datos bancarios</small>
+                </label>
+
+                <label class="metodo-pago">
+                    <input type="radio" name="metodo_pago" value="transferencia" 
+                           onchange="seleccionarMetodo(this)">
+                    <strong>Transferencia Bancaria</strong><br>
+                    <small>Transferencia directa - Procesamiento en 24h</small>
+                </label>
+
+                <button type="submit" class="btn-pagar">
+                     Confirmar Pago - ${{ "%.2f"|format(total) }}
+                </button>
+
+                <div class="info-seguridad">
+                     Pago 100% seguro - Tus datos están protegidos
+                </div>
             </div>
-            <button type="submit" class="btn btn-primary">Pagar</button>
         </form>
     </div>
-    {% else %}
-    <p style="text-align: center; font-size: 1.2em; margin-top: 20px;">No hay productos en el resumen</p>
-    {% endif %}
-    <!-- Al final del body, antes de cerrar </body> -->
-{% include 'footer_boutique.html' %}
-</div>
-{% endblock %}
+
+    <script>
+        function seleccionarMetodo(radio) {
+            // Remover clase de todos los métodos
+            document.querySelectorAll('.metodo-pago').forEach(metodo => {
+                metodo.classList.remove('metodo-seleccionado');
+            });
+            
+            // Agregar clase al método seleccionado
+            radio.parentElement.classList.add('metodo-seleccionado');
+        }
+
+        // Seleccionar el primer método al cargar la página
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelector('.metodo-pago').classList.add('metodo-seleccionado');
+        });
+    </script>
+</body>
+</html>
