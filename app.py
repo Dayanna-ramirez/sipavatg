@@ -11,6 +11,8 @@ import secrets
 from datetime import datetime, timedelta
 import smtplib
 from email.mime.text import MIMEText    
+from email.mime.multipart import MIMEMultipart
+
 from decimal import Decimal
 
 app = Flask(__name__)
@@ -18,9 +20,10 @@ app.secret_key = 'clave_super_secreta'
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = 'sipavatg@gmail.com'
-app.config['MAIL_PASSWORD'] = '123456789'
-app.config['MAIL_DEFAULT_SENDER'] = 'sipavatg@gmail.com'
+app.config['MAIL_USERNAME'] = 'sipavagt@gmail.com'
+app.config['MAIL_PASSWORD'] = 'gaux pvym bdma dvhl'
+app.config['MAIL_DEFAULT_SENDER'] = 'sipavagt@gmail.com'
+app.config['UPLOAD_FOLDER'] = 'static/uploads/'
 
 mail = Mail(app)
 
@@ -117,11 +120,28 @@ def contar_items_carrito():
 # Ruta inicial redirige al login
 @app.route('/')
 def home_redirect():
+
     return redirect(url_for('login'))
+
+@app.route('/pagina_principal')
+def pagina_principal():
+       # Obtener alertas de stock solo para admin
+    alertas_stock = []
+    if session.get('rol') == 'Admin':
+        alertas_stock = check_stock_bajo()
+    return render_template('pagina_principal.html', alertas_stock=alertas_stock)
+
+@app.route('/perfil')
+def perfil():
+    return render_template('perfil.html')
+
 
 # Dashboard principal (pantalla después de login)
 @app.route('/dashboard')
+@login_required
+@admin_required
 def dashboard():
+
     if 'user_id' not in session and 'idUsuario' not in session:
         flash("❌ Debes iniciar sesión para acceder al dashboard.", "warning")
         return redirect(url_for('login'))
@@ -180,12 +200,13 @@ def register():
             conn.close()
 
         # Login automático después del registro
-        session['user_id'] = user_id
-        session['idUsuario'] = user_id
-        session['user_name'] = cte_nombre
-        session['rol'] = 'Usuario'  # Rol por defecto para nuevos registros
+            session['user_id'] = user_id
+            session['idUsuario'] = user_id
+            session['user_name'] = cte_nombre
+            session['rol'] = 'Usuario'  # Rol por defecto para nuevos registros
         flash('✅ Registro exitoso. ¡Bienvenido!', 'success')
-        return redirect(url_for('dashboard'))
+        return redirect(url_for('pagina_principal'))
+
 
     return render_template('register.html')
 
@@ -225,7 +246,7 @@ def login():
                         
                         print(f"✅ Login exitoso. Rol: {session['rol']}")  # Debug
                         flash('✅ Inicio de sesión exitoso', 'success')
-                        return redirect(url_for('dashboard'))
+                        return redirect(url_for('pagina_principal'))
                     else:
                         print("❌ Contraseña incorrecta")  # Debug
                         flash('❌ Correo o contraseña incorrectos', 'danger')
@@ -250,67 +271,136 @@ def logout():
     flash('🔒 Sesión cerrada.', 'info')
     return redirect(url_for('login'))
 
-# =============================================
-# RUTAS DE RECUPERACIÓN DE CONTRASEÑA
-# =============================================
+# -----------------------------
+# GENERAR TOKEN
+# -----------------------------
+def generar_token(email):
+    token = secrets.token_urlsafe(32)
+    expiry = datetime.now() + timedelta(hours=1)
 
-@app.route('/forgot-password', methods=['GET', 'POST'])
-def forgot_password():
+    conn = pymysql.connect(**db_config)
+    with conn.cursor() as cur:
+        cur.execute("UPDATE usuario SET reset_token=%s, token_expiry=%s WHERE correo_electronico=%s", (token, expiry, email))
+        conn.commit()
+    conn.close()
+    return token
+
+
+# -----------------------------
+# ENVIAR CORREO DE RECUPERACIÓN
+# -----------------------------
+def enviar_correo_reset(email, token):
+    enlace = url_for('reset', token=token, _external=True)
+
+    cuerpo_texto = f"""Hola, solicitaste recuperar tu contraseña.
+Haz clic en el siguiente enlace:
+{enlace}
+
+Este enlace expirará en 1 hora.
+Si no lo solicitaste, ignora este mensaje.
+"""
+
+    cuerpo_html = f"""
+    <html>
+      <body>
+        <p>Hola, solicitaste recuperar tu contraseña.</p>
+        <p>Haz clic en el siguiente enlace:</p>
+        <p><a href="{enlace}" style="color:#1a73e8;">Restablecer contraseña</a></p>
+        <p>Este enlace expirará en 1 hora.</p>
+        <p>Si no lo solicitaste, ignora este mensaje.</p>
+      </body>
+    </html>
+    """
+
+    remitente = "sipavagt@gmail.com"
+    clave = "gaux pvym bdma dvhl"  # ⚠️ En producción usa una variable de entorno
+
+    # Crear mensaje multiparte
+    mensaje = MIMEMultipart("alternative")
+    mensaje["Subject"] = "Recuperar contraseña"
+    mensaje["From"] = remitente
+    mensaje["To"] = email
+
+    # Adjuntar versiones en texto y HTML codificadas explícitamente
+    parte_texto = MIMEText(cuerpo_texto, "plain", "utf-8")
+    parte_html = MIMEText(cuerpo_html, "html", "utf-8")
+
+    mensaje.attach(parte_texto)
+    mensaje.attach(parte_html)
+
+    # ✅ Convertir mensaje a bytes en lugar de string
+    raw_message = mensaje.as_bytes()
+
+    # Enviar
+    with smtplib.SMTP("smtp.gmail.com", 587) as server:
+        server.starttls()
+        server.login(remitente, clave)
+        server.sendmail(remitente, [email], raw_message)
+
+
+# -----------------------------
+# SOLICITAR RESETEO (FORGOT)
+# -----------------------------
+@app.route('/forgot', methods=['GET', 'POST'])
+def forgot():
     if request.method == 'POST':
-        email = request.form['email']
+        email = request.form['correo_electronico']
 
         conn = pymysql.connect(**db_config)
-        try:
-            with conn.cursor() as cur:
-                cur.execute("SELECT id_usuario, nombre FROM usuario WHERE correo_electronico = %s", (email,))
-                user = cur.fetchone()
-        finally:
-            conn.close()
+        with conn.cursor() as cur:
+            cur.execute("SELECT id_usuario FROM usuario WHERE correo_electronico=%s", (email,))
+            existe = cur.fetchone()
+        conn.close()
 
-        if user:
-            token = s.dumps(email, salt='recuperar-clave')
-            link = url_for('reset_password', token=token, _external=True)
+        if not existe:
+            flash("Este correo no está registrado.")
+            return redirect(url_for('forgot'))
+        
+        token = generar_token(email)
+        enviar_correo_reset(email, token)
 
-            try:
-                msg = Message('Recuperar contraseña - SIPAVATG', recipients=[email])
-                msg.body = f"Hola {user['nombre']},\n\nPara restablecer tu contraseña haz clic en el siguiente enlace:\n{link}\n\nSi no solicitaste este cambio, ignora este mensaje."
-                mail.send(msg)
-                flash('✅ Se ha enviado un enlace de recuperación a tu correo.', 'success')
-            except Exception as e:
-                flash(f'❌ Error al enviar el correo: {e}', 'danger')
-        else:
-            flash('❌ El correo no está registrado en el sistema.', 'warning')
-
+        flash("Te enviamos un correo con el enlace para restablecer tu contraseña.")
         return redirect(url_for('login'))
 
-    return render_template('restored.html')
+    return render_template('forgot.html')
 
-@app.route('/reset-password/<token>', methods=['GET', 'POST'])
-def reset_password(token):
-    try:
-        # Decodifica el token (válido por 1 hora)
-        email = s.loads(token, salt='recuperar-clave', max_age=3600)
-    except Exception:
-        flash('❌ El enlace ha expirado o no es válido.', 'danger')
-        return redirect(url_for('forgot_password'))
+
+# -----------------------------
+# RESETEAR CONTRASEÑA
+# -----------------------------
+@app.route('/reset/<token>', methods=['GET', 'POST'])
+def reset(token):
+    conn = pymysql.connect(**db_config)
+    with conn.cursor() as cur:
+        cur.execute("SELECT id_usuario, token_expiry FROM usuario WHERE reset_token=%s", (token,))
+        usuario = cur.fetchone()
+    conn.close()
+
+    if not usuario or datetime.now() > usuario["token_expiry"]:
+        flash("Token inválido o expirado.")
+        return redirect(url_for('forgot'))
 
     if request.method == 'POST':
-        nueva_contrasena = request.form.get('password')
-        hash_nueva = generate_password_hash(nueva_contrasena)
+        nuevo_password = request.form['password']
+        hash_nueva = generate_password_hash(nuevo_password)
 
         conn = pymysql.connect(**db_config)
-        try:
-            with conn.cursor() as cur:
-                cur.execute("UPDATE usuario SET clave = %s WHERE correo_electronico = %s",
-                            (hash_nueva, email))
-                conn.commit()
-        finally:
-            conn.close()
+        with conn.cursor() as cur:
+            cur.execute("""
+                UPDATE usuario 
+                SET clave=%s, reset_token=NULL, token_expiry=NULL 
+                WHERE id_usuario=%s
+            """, (hash_nueva, usuario["id_usuario"]))
+            conn.commit()
+        conn.close()
 
-        flash('✅ Tu contraseña ha sido actualizada correctamente.', 'success')
+        print("Contraseña actualizada correctamente. Redirigiendo a login...")
+        flash("Tu contraseña ha sido actualizada.")
         return redirect(url_for('login'))
 
-    return render_template('reset_password.html')
+    return render_template('reset.html', token=token )
+
+
 
 # =============================================
 # RUTAS PARA CUPONES
@@ -363,91 +453,144 @@ def remover_cupon():
 @admin_required
 def inventario():
     conn = pymysql.connect(**db_config)
+    productos = []
     try:
-        with conn.cursor() as cursor:
-            cursor.execute("SELECT * FROM producto")
-            productos = cursor.fetchall()
+        with conn.cursor(pymysql.cursors.DictCursor) as cur:
+            # Obtener productos
+            cur.execute("SELECT * FROM producto")
+            productos = cur.fetchall()
+            # Obtener tallas por producto
+            for p in productos:
+                cur.execute("""
+                    SELECT talla, cantidad FROM talla_producto
+                    WHERE id_producto = %s
+                """, (p['id_producto'],))
+                tallas = cur.fetchall()
+                p['tallas_cantidades'] = {t['talla']: t['cantidad'] for t in tallas}
     finally:
         conn.close()
-
     return render_template('inventario.html', productos=productos)
 
-@app.route('/agregar_producto', methods=['GET', 'POST'])
+@app.route('/agregar_producto', methods=['POST'])
 @login_required
 @admin_required
 def agregar_producto():
-    if request.method == 'POST':
-        nombre = request.form.get('nombre')
-        precio = request.form.get('precio')
-        cantidad = request.form.get('cantidad')
-        imagen = request.files.get('imagen')
+    nombre = request.form['nombre']
+    precio = request.form['precio']
+    tipo = request.form['tipo']
+    imagen = request.files['imagen']
 
-        filename = None
-        if imagen and imagen.filename != '':
-            filename = secure_filename(imagen.filename)
-            os.makedirs('static/uploads', exist_ok=True)
-            imagen.save(os.path.join('static/uploads', filename))
+    # Procesar tallas y cantidades
+    cantidades_por_talla = {
+        'XS': int(request.form.get('talla_XS', 0) or 0),
+        'S': int(request.form.get('talla_S', 0) or 0),
+        'M': int(request.form.get('talla_M', 0) or 0),
+        'L': int(request.form.get('talla_L', 0) or 0),
+        'XL': int(request.form.get('talla_XL', 0) or 0)
+    }
 
-        conn = pymysql.connect(**db_config)
-        try:
-            with conn.cursor() as cur:
-                cur.execute("""
-                    INSERT INTO producto (nombre_producto, precio, cantidad, imagen)
-                    VALUES (%s, %s, %s, %s)
-                """, (nombre, precio, cantidad, filename))
-                conn.commit()
-        finally:
-            conn.close()
+    # Calcular cantidad total (suma de todas las tallas)
+    cantidad_total = sum(cantidades_por_talla.values())
 
-        flash("✅ Producto agregado correctamente", "success")
-        return redirect(url_for('inventario'))
-    return render_template('agregar_producto.html')
+    # Guardar la imagen
+    filename = secure_filename(imagen.filename)
+    imagen.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
 
-@app.route('/editar_producto/<int:id>', methods=['GET', 'POST'])
-@login_required
-@admin_required
-def editar_producto(id):
     conn = pymysql.connect(**db_config)
     try:
         with conn.cursor() as cur:
-            cur.execute("SELECT * FROM producto WHERE id_producto=%s", (id,))
-            producto = cur.fetchone()
+            # Insertar producto principal
+            cur.execute("""
+                INSERT INTO producto (nombre_producto, precio, cantidad, tipo, imagen)
+                VALUES (%s, %s, %s, %s, %s)
+            """, (nombre, precio, cantidad_total, tipo, filename))
+            conn.commit()
 
-        if request.method == 'POST':
-            nombre = request.form.get('nombre')
-            precio = request.form.get('precio')
-            cantidad = request.form.get('cantidad')
-            imagen = request.files.get('imagen')
+            # Obtener ID del producto insertado
+            cur.execute("SELECT LAST_INSERT_ID() AS id_producto")
+            id_producto = cur.fetchone()['id_producto']
 
-            if imagen and imagen.filename != '':
-                filename = secure_filename(imagen.filename)
-                os.makedirs('static/uploads', exist_ok=True)
-                imagen.save(os.path.join('static/uploads', filename))
-            else:
-                filename = producto.get('imagen') if producto else None
+            # Insertar tallas asociadas
+            for talla, cantidad_talla in cantidades_por_talla.items():
+                if cantidad_talla > 0:
+                    cur.execute("""
+                        INSERT INTO talla_producto (id_producto, talla, cantidad)
+                        VALUES (%s, %s, %s)
+                    """, (id_producto, talla, cantidad_talla))
+            conn.commit()
 
-            conn2 = pymysql.connect(**db_config)
-            try:
-                with conn2.cursor() as cur2:
-                    cur2.execute("""
-                        UPDATE producto
-                        SET nombre_producto=%s, precio=%s, cantidad=%s, imagen=%s
-                        WHERE id_producto=%s
-                    """, (nombre, precio, cantidad, filename, id))
-                    conn2.commit()
-            finally:
-                conn2.close()
-
-            flash("✅ Producto actualizado correctamente", "success")
-            return redirect(url_for('inventario'))
-
-        return render_template('editar_producto.html', producto=producto)
+            flash("✅ Producto agregado correctamente.", "success")
 
     except Exception as e:
-        flash(f"❌ Error al editar el producto: {str(e)}", "danger")
-        return redirect(url_for('inventario'))
+        conn.rollback()
+        flash(f"❌ Error al agregar producto: {e}", "danger")
+
     finally:
         conn.close()
+
+    return redirect(url_for('inventario'))
+
+
+@app.route('/editar_producto/<int:id>', methods=['POST'])
+@login_required
+@admin_required
+def editar_producto(id):
+    nombre = request.form['nombre']
+    precio = request.form['precio']
+    tipo = request.form['tipo']
+    imagen = request.files['imagen']
+
+    # Calcular cantidad total (sumando tallas enviadas)
+    cantidades_por_talla = {
+        'XS': int(request.form.get('talla_XS', 0) or 0),
+        'S': int(request.form.get('talla_S', 0) or 0),
+        'M': int(request.form.get('talla_M', 0) or 0),
+        'L': int(request.form.get('talla_L', 0) or 0),
+        'XL': int(request.form.get('talla_XL', 0) or 0)
+    }
+    cantidad_total = sum(cantidades_por_talla.values())
+
+    conn = pymysql.connect(**db_config)
+    try:
+        with conn.cursor() as cur:
+            # Si se sube nueva imagen, actualiza también esa columna
+            if imagen and imagen.filename:
+                filename = secure_filename(imagen.filename)
+                imagen.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                cur.execute("""
+                    UPDATE producto 
+                    SET nombre_producto=%s, precio=%s, cantidad=%s, tipo=%s, imagen=%s
+                    WHERE id_producto=%s
+                """, (nombre, precio, cantidad_total, tipo, filename, id))
+            else:
+                cur.execute("""
+                    UPDATE producto 
+                    SET nombre_producto=%s, precio=%s, cantidad=%s, tipo=%s
+                    WHERE id_producto=%s
+                """, (nombre, precio, cantidad_total, tipo, id))
+
+            # Eliminar tallas anteriores
+            cur.execute("DELETE FROM talla_producto WHERE id_producto = %s", (id,))
+
+            # Insertar nuevas tallas
+            for talla, cantidad_talla in cantidades_por_talla.items():
+                if cantidad_talla > 0:
+                    cur.execute("""
+                        INSERT INTO talla_producto (id_producto, talla, cantidad)
+                        VALUES (%s, %s, %s)
+                    """, (id, talla, cantidad_talla))
+
+            conn.commit()
+            flash("✅ Producto actualizado correctamente.", "success")
+
+    except Exception as e:
+        conn.rollback()
+        flash(f"❌ Error al actualizar producto: {e}", "danger")
+
+    finally:
+        conn.close()
+
+    return redirect(url_for('inventario'))
 
 @app.route('/eliminar_producto/<int:id>')
 @login_required
@@ -456,9 +599,12 @@ def eliminar_producto(id):
     conn = pymysql.connect(**db_config)
     try:
         with conn.cursor() as cur:
+            # Primero elimina las tallas asociadas
+            cur.execute('DELETE FROM talla_producto WHERE id_producto=%s', (id,))
+            # Luego elimina el producto
             cur.execute('DELETE FROM producto WHERE id_producto=%s', (id,))
             conn.commit()
-        flash('✅ Producto eliminado correctamente', 'success')
+        flash('✅ Producto eliminado correctamente.', 'success')
     except Exception as e:
         conn.rollback()
         flash(f'❌ Error al eliminar el producto: {str(e)}', 'danger')
@@ -584,17 +730,6 @@ def agregar_usuario():
 # RUTAS DE CATÁLOGO Y CARRITO
 # =============================================
 
-@app.route('/catalogo')
-def catalogo():
-    conn = pymysql.connect(**db_config)
-    try:
-        with conn.cursor() as cur:
-            cur.execute("SELECT * FROM producto")
-            productos = cur.fetchall()
-    finally:
-        conn.close()
-    return render_template('catalogo.html', productos=productos)
-
 @app.route('/agregarCarrito/<int:id>', methods=['POST'])
 @login_required
 def agregarCarrito(id):
@@ -603,19 +738,30 @@ def agregarCarrito(id):
     except ValueError:
         cantidad = 1
 
+    talla = request.form.get('talla')
+    if not talla:
+        flash("Debes seleccionar una talla.", "danger")
+        return redirect(url_for('catalogo'))
+
     idUsuario = session['idUsuario']
 
     conn = pymysql.connect(**db_config)
     try:
-        with conn.cursor() as cur:
-            cur.execute("SELECT cantidad FROM producto WHERE id_producto = %s", (id,))
+        with conn.cursor(pymysql.cursors.DictCursor) as cur:
+            # Validar stock por talla
+            cur.execute("""
+                SELECT cantidad FROM talla_producto
+                WHERE id_producto = %s AND talla = %s
+                """, (id, talla))
+            
             stock = cur.fetchone()
             if not stock:
-                flash("❌ Producto no encontrado.", "danger")
+                flash("No hay stock registrado para la talla seleccionada.", "danger")
                 return redirect(url_for('catalogo'))
-
+            
             stock_val = stock['cantidad']
 
+            # Obtener o crear carrito
             cur.execute("SELECT idCarrito FROM carrito WHERE idUsuario = %s", (idUsuario,))
             carrito = cur.fetchone()
             if not carrito:
@@ -623,13 +769,14 @@ def agregarCarrito(id):
                 conn.commit()
                 cur.execute("SELECT LAST_INSERT_ID() AS idCarrito")
                 carrito = cur.fetchone()
-
+            
             idCarrito = carrito['idCarrito']
 
+            # Verificar si ya existe ese producto con esa talla en el carrito
             cur.execute("""
-                SELECT cantidad FROM detalles_carrito 
-                WHERE idCarrito = %s AND idProducto = %s
-            """, (idCarrito, id))
+                SELECT cantidad FROM detalles_carrito
+                WHERE idCarrito = %s AND idProducto = %s AND talla = %s
+                """, (idCarrito, id, talla))
             existente = cur.fetchone()
 
             nueva_cantidad = cantidad
@@ -637,29 +784,51 @@ def agregarCarrito(id):
                 nueva_cantidad += existente['cantidad']
 
             if nueva_cantidad > stock_val:
-                flash("⚠️ No puedes agregar más unidades de las disponibles.", "warning")
+                flash(f"Solo hay {stock_val} unidades disponibles en talla {talla}.", "warning")
             else:
                 if existente:
                     cur.execute("""
                         UPDATE detalles_carrito
                         SET cantidad = %s
-                        WHERE idCarrito = %s AND idProducto = %s
-                    """, (nueva_cantidad, idCarrito, id))
+                        WHERE idCarrito = %s AND idProducto = %s AND talla = %s
+                        """, (nueva_cantidad, idCarrito, id, talla))
                 else:
                     cur.execute("""
-                        INSERT INTO detalles_carrito (idCarrito, idProducto, cantidad)
-                        VALUES (%s, %s, %s)
-                    """, (idCarrito, id, cantidad))
+                        INSERT INTO detalles_carrito (idCarrito, idProducto,
+cantidad, talla)
+                        VALUES (%s, %s, %s, %s)
+                        """, (idCarrito, id, cantidad, talla))
 
                 conn.commit()
-                flash("✅ Producto agregado al carrito.", "success")
+                flash(f"Producto agregado al carrito (Talla: {talla}, Cantidad: {cantidad}).", "success")
     except Exception as e:
         conn.rollback()
-        flash(f"❌ Ocurrió un error al agregar al carrito: {e}", "danger")
+        flash(f"Ocurrió un error al agregar al carrito: {e}", "danger")
     finally:
         conn.close()
 
     return redirect(url_for('catalogo'))
+
+@app.route('/catalogo')
+def catalogo():
+    conn = pymysql.connect(**db_config)
+    productos = []
+    try:
+        with conn.cursor(pymysql.cursors.DictCursor) as cur:
+            cur.execute("SELECT * FROM producto")
+            productos = cur.fetchall()
+
+            for p in productos:
+                cur.execute("""
+                    SELECT talla, cantidad FROM talla_producto
+                    WHERE id_producto = %s
+                    """, (p['id_producto'],))
+                tallas = cur.fetchall()
+                p['tallas'] = {t['talla']: t['cantidad'] for t in tallas}
+    finally:
+        conn.close()
+
+    return render_template('catalogo.html', productos=productos)
 
 @app.route('/carrito')
 @login_required
@@ -667,26 +836,28 @@ def carrito():
     idUsuario = session['idUsuario']
     conn = pymysql.connect(**db_config)
     try:
-        with conn.cursor() as cur:
+        with conn.cursor(pymysql.cursors.DictCursor) as cur:
             cur.execute("""
-                SELECT p.id_producto, p.nombre_producto, p.precio, p.imagen, dc.cantidad
+                SELECT p.id_producto, p.nombre_producto, p.precio, p.imagen,
+dc.cantidad, dc.talla
                 FROM detalles_carrito dc
                 JOIN carrito c ON dc.idCarrito = c.idCarrito
                 JOIN producto p ON dc.idProducto = p.id_producto
                 WHERE c.idUsuario = %s
-            """, (idUsuario,))
+                """, (idUsuario,))
             productos_carrito = cur.fetchall()
     finally:
         conn.close()
 
-    total_original = sum(p['precio'] * p['cantidad'] for p in productos_carrito)
+    total_original = sum(p['precio'] * p['cantidad'] for p in
+productos_carrito)
     total_con_descuento = aplicar_descuento_carrito(total_original)
 
     return render_template('carrito.html',
-                        productos=productos_carrito,
-                        total=total_con_descuento,
-                        total_original=total_original,
-                        Decimal=Decimal)
+                           productos=productos_carrito,
+                           total=total_con_descuento,
+                           total_original=total_original,
+                           Decimal=Decimal)
 
 @app.route('/actualizar_carrito/<int:id>', methods=['POST'])
 @login_required
@@ -860,13 +1031,79 @@ def confirmar_pago():
     total = request.args.get('total')
     return render_template('confirmar_pago.html', metodo=metodo, codigo=codigo, total=total)
 
+@app.route('/alquiler')
+def alquiler():
+    # Conexión directa usando tu configuración
+    connection = pymysql.connect(**db_config)
+    cursor = connection.cursor()
+    cursor.execute("SELECT * FROM producto WHERE tipo = 'alquiler'")
+    productos = cursor.fetchall()
+    cursor.close()
+    connection.close()
+    return render_template('alquiler.html', productos=productos)
+
+
+@app.route('/procesar_alquiler/<int:id_producto>', methods=['POST'])
+def procesar_alquiler(id_producto):
+    dias = request.form['dias']
+
+    # Conectar a la base de datos
+    connection = pymysql.connect(**db_config)
+    cursor = connection.cursor()
+    cursor.execute("SELECT * FROM producto WHERE id_producto = %s", (id_producto,))
+    producto = cursor.fetchone()
+    cursor.close()
+    connection.close()
+
+    # Verificar que el producto exista
+    if not producto:
+        flash("Producto no encontrado.", "danger")
+        return redirect(url_for('alquiler'))
+
+    # Mostrar confirmación simple
+    flash(f"Has alquilado {producto['nombre_producto']} por {dias} días.", "success")
+    return redirect(url_for('alquiler'))
+
 # =============================================
 # RUTAS ADICIONALES
 # =============================================
+@app.route('/buscar', methods=['GET'])
+def buscar():
+    termino = request.args.get('q', '').strip()
+
+    conn = pymysql.connect(**db_config)
+    productos = []
+    try:
+        with conn.cursor(pymysql.cursors.DictCursor) as cur:
+            if termino:
+                # Buscar por nombre o tipo
+                cur.execute("""
+                SELECT * FROM producto
+                WHERE nombre_producto LIKE %s OR tipo LIKE %s
+                """, [f"%{termino}%", f"%{termino}%"])
+
+            else:
+                # Si no hay término, mostrar todos
+                cur.execute("SELECT * FROM producto")
+
+            productos = cur.fetchall()
+
+            # Obtener tallas por producto
+            for p in productos:
+                cur.execute("""
+                    SELECT talla, cantidad FROM talla_producto
+                    WHERE id_producto = %s
+                """, (p['id_producto'],))
+                tallas = cur.fetchall()
+                p['tallas'] = {t['talla']: t['cantidad'] for t in tallas}
+    finally:
+        conn.close()
+
+    return render_template('catalogo.html', productos=productos, termino=termino)
 
 @app.route('/enviar_prueba')
 def enviar_prueba():
-    enviar_alerta('sipavatg@gmail.com', 'Prueba de alerta', '¡Hola Helen! Este es un correo de prueba desde Flask.')
+    enviar_alerta('sipavagt@gmail.com', 'Prueba de alerta', '¡Hola Helen! Este es un correo de prueba desde Flask.')
     return '📧 Correo de prueba enviado. Revisa la consola y tu bandeja.'
 
 if __name__ == "__main__":

@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}alquilar{% endblock %}
+
+{% block content %}
+
+<!-- Encabezado -->
+    <header class="bg-dark text-white text-center py-3">
+        <h1>Productos en Alquiler</h1>
+        <p>Selecciona el producto que deseas alquilar</p>
+        <a href="{{ url_for('pagina_principal') }}" class="btn btn-outline-light mt-2">Volver al inicio</a>
+    </header>
+
+    <!-- Contenedor principal -->
+    <div class="container mt-5">
+        <div class="row">
+            {% for producto in productos %}
+            <div class="col-md-4 mb-4">
+                <div class="card shadow-sm h-100">
+                    <img src="{{ url_for('static', filename='uploads/' + producto['imagen']) }}" class="card-img-top" alt="{{ producto['nombre_producto'] }}">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">{{ producto['nombre_producto'] }}</h5>
+                        <p class="card-text">
+                            <strong>Precio:</strong> ${{ producto['precio'] }} <br>
+                            <strong>Talla:</strong> {{ producto['talla'] }} <br>
+                            <strong>Disponibles:</strong> {{ producto['cantidad'] }}
+                        </p>
+                        <form action="{{ url_for('procesar_alquiler', id_producto=producto['id_producto']) }}" method="POST">
+                            <div class="mb-2">
+                                <label for="dias">Días de alquiler:</label>
+                                <input type="number" name="dias" class="form-control" min="1" value="1" required>
+                            </div>
+                            <button type="submit" class="btn btn-success w-100">Alquilar</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <p class="text-center mt-4">No hay productos disponibles para alquilar.</p>
+            {% endfor %}
+        </div>
+    </div>
+
+{% endblock %}

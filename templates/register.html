@@ -1,16 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <meta charset="UTF-8">
     <link rel="stylesheet" href="https://unpkg.com/bootstrap@5.3.3/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='register.css') }}">
     <title>Registro Completo</title>
 </head>
 <body>
-    <div class="register-background">
-        <div class="register-card">
-            <h2 class="text-center mb-4">¡Crea tu cuenta!</h2>
+    <div class="register-background d-flex align-items-center justify-content-center vh-100">
+        <div class="register-card shadow-lg p-4 rounded-4 ">
+            <h2 class="text-center mb-4 text-white">¡Crea tu cuenta!</h2>
+
             <form action="{{ url_for('register') }}" method="POST">
-                <div class="row">
+                <div class="row g-3">
                     <div class="col-md-6">
                         <div class="form-group">
                             <label>Nombre</label>
@@ -20,17 +22,19 @@
                             <label>Apellido</label>
                             <input type="text" name="cte_apellido" class="form-control" required>
                         </div>
-                       <div class="form-group">
-                            <label>telefono</label>
+                        <div class="form-group">
+                            <label>Teléfono</label>
                             <input type="text" name="cte_telefono" class="form-control" required>
                         </div>
                     </div>
+
+                    <div class="col-md-6">
                         <div class="form-group">
                             <label>Correo</label>
                             <input type="email" name="correo_electronico" class="form-control" required>
                         </div>
                         <div class="form-group">
-                            <label>cedula</label>
+                            <label>Cédula</label>
                             <input type="text" name="cte_cedula" class="form-control" required>
                         </div>
                         <div class="form-group">
@@ -41,7 +45,14 @@
                 </div>
 
                 <div class="text-center mt-4">
-                    <button type="submit" class="btn-register">Registrarse</button>
+                    <button type="submit" class="btn-register w-100 py-2">Registrarse</button>
                 </div>
-                <p class="text-center mt-3">¿Ya tienes cuenta? <a href="{{ url_for('login') }}">Inicia sesión</a></p>
-            </form> 
+
+                <p class="text-center mt-3">
+                    ¿Ya tienes cuenta? <a href="{{ url_for('login') }}">Inicia sesión</a>
+                </p>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

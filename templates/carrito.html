@@ -15,6 +15,7 @@
                 <th>Producto</th>
                 <th>Precio</th>
                 <th>Cantidad</th>
+                <th>Talla</th>
                 <th>Acciones</th>
             </tr>
         </thead>
@@ -33,6 +34,7 @@
                         <button name="accion" value="sumar" class="btn btn-success">+</button>
                     </form>
                 </td>
+                <td>{{ p.talla }}</td>
                 <td>
                     <a href="{{ url_for('eliminar_del_carrito', id=p.id_producto) }}" class="btn btn-danger">Eliminar</a>
                 </td>

@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}pagina principal{% endblock %}
+
+{% block content %}
+   <!-- Alertas de Stock Bajo - Solo para Admin -->
+    {% if alertas_stock and session.rol == 'Admin' %}
+    <div style="
+        background: #fff3cd; 
+        border: 2px solid #ffc107; 
+        padding: 20px; 
+        border-radius: 10px; 
+        margin: 20px 0;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    ">
+        <h4 style="color: #856404; margin: 0 0 15px 0; display: flex; align-items: center;">
+            ⚠️ Alertas de Stock Bajo
+        </h4>
+        
+        {% for producto in alertas_stock %}
+        <div style="
+            background: white; 
+            padding: 12px; 
+            margin: 8px 0; 
+            border-radius: 6px;
+            border-left: 4px solid #dc3545;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        ">
+            <strong style="color: #dc3545;">{{ producto.nombre_producto }}</strong>
+            <span style="color: #6c757d;">Solo quedan {{ producto.cantidad }} unidades</span>
+        </div>
+        {% endfor %}
+        
+        <div style="margin-top: 10px; font-size: 0.9em; color: #856404;">
+            💡 Considera reponer estos productos pronto
+        </div>
+    </div>
+    {% endif %}
+<!-- Menú de tarjetas de acceso rápido -->
+<section class="quick-access">
+    <div class="container">
+        <h2 class="section-title">Acceso Rápido</h2>
+        <div class="cards-grid">
+            {% if session.rol == 'Admin' %}
+            <a href="{{ url_for('dashboard') }}" class="card-link">
+                <div class="feature-card">
+                    <div class="card-icon">
+                        <i class="bi bi-speedometer2"></i>
+                    </div>
+                    <div class="card-content">
+                        <h3>Dashboard</h3>
+                        <p>Panel de control principal</p>
+                    </div>
+                    <div class="card-badge">Principal</div>
+                </div>
+            </a>
+
+            
+            <a href="{{ url_for('inventario') }}" class="card-link">
+                <div class="feature-card">
+                    <div class="card-icon">
+                        <i class="bi bi-box-seam"></i>
+                    </div>
+                    <div class="card-content">
+                        <h3>Inventario</h3>
+                        <p>Gestión de productos</p>
+                    </div>
+                    <div class="card-badge admin">Admin</div>
+                </div>
+            </a>
+            {% endif %}
+
+            <a href="{{ url_for('catalogo') }}" class="card-link">
+                <div class="feature-card">
+                    <div class="card-icon">
+                        <i class="bi bi-grid"></i>
+                    </div>
+                    <div class="card-content">
+                        <h3>Catálogo</h3>
+                        <p>Ver todos los productos</p>
+                    </div>
+                </div>
+            </a>
+
+            <a href="{{ url_for('alquiler') }}" class="card-link">
+                <div class="feature-card">
+                    <div class="card-icon">
+                        <i class="bi bi-calendar"></i>
+                    </div>
+                    <div class="card-content">
+                        <h3>Alquiler</h3>
+                        <p>Alquila el producto que te guste</p>
+                    </div>
+                </div>
+            </a>
+            {% if session.rol == 'Admin' %}
+
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+{% endblock %}

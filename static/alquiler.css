@@ -1,0 +1,23 @@
+.card img {
+    height: 250px;
+    object-fit: cover;
+    border-radius: 10px 10px 0 0;
+}
+
+.card {
+    border-radius: 15px;
+    transition: transform 0.2s;
+}
+
+.card:hover {
+    transform: scale(1.03);
+}
+
+.btn-success {
+    background-color: #007b5e;
+    border: none;
+}
+
+.btn-success:hover {
+    background-color: #009e73;
+}
